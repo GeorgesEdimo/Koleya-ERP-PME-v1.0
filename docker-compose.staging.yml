@@ -1,0 +1,9 @@
+# =============================================
+# Koleya — override STAGING (Docker Desktop, HTTP local)
+# Usage : docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.staging.yml up -d --build
+# Accès : http://localhost:8080
+# =============================================
+services:
+  frontend:
+    ports:
+      - "8080:80"

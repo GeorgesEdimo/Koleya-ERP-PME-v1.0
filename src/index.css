@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  /* Accessibilite : focus visible pour navigation clavier */
+  :focus-visible {
+    outline: 2px solid #4c6ef5;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-dark-200/50 shadow-card;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:shadow-card-hover hover:border-primary-200;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-dark-100 text-dark-700 font-medium rounded-lg hover:bg-dark-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-dark-400 focus:ring-offset-2;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-danger-500 text-white font-medium rounded-lg hover:bg-danger-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2;
+  }
+
+  .btn-success {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-success-500 text-white font-medium rounded-lg hover:bg-success-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-success-500 focus:ring-offset-2;
+  }
+
+  .input {
+    @apply w-full px-3 py-2.5 bg-white border border-dark-300 rounded-lg text-dark-900 placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
+  }
+
+  .input-label {
+    @apply block text-sm font-medium text-dark-700 mb-1.5;
+  }
+
+  .select {
+    @apply w-full px-3 py-2.5 bg-white border border-dark-300 rounded-lg text-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+
+  .table-container {
+    @apply overflow-x-auto rounded-xl border border-dark-200/50;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    @apply w-full text-sm;
+    min-width: 640px;
+  }
+
+  .table thead {
+    @apply bg-dark-50 border-b border-dark-200;
+  }
+
+  .table th {
+    @apply px-3 py-3 text-left text-xs font-semibold text-dark-600 uppercase tracking-wider whitespace-nowrap;
+  }
+
+  .table td {
+    @apply px-3 py-3 text-dark-800;
+  }
+
+  .table tbody tr {
+    @apply border-b border-dark-100 hover:bg-primary-50/30 transition-colors;
+  }
+
+  @media (max-width: 640px) {
+    .table th, .table td {
+      @apply px-2 py-2 text-xs;
+    }
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-success-50 text-success-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-accent-50 text-accent-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-50 text-danger-700;
+  }
+
+  .badge-info {
+    @apply badge bg-primary-50 text-primary-700;
+  }
+
+  .stat-card {
+    @apply card p-3 sm:p-5 flex flex-col;
+  }
+
+  .page-title {
+    @apply text-xl sm:text-2xl font-bold text-dark-900 font-display;
+  }
+
+  .page-subtitle {
+    @apply text-xs sm:text-sm text-dark-500 mt-1;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ced4da;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
+
+/* Toast animations */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* =============================================
+   Préférences : couleur d'entreprise + thème + RTL
+   ============================================= */
+:root {
+  --couleur-entreprise: #4c6ef5;
+}
+
+/* Pivot de la couleur primaire de l'interface vers --couleur-entreprise */
+.bg-primary-600 { background-color: var(--couleur-entreprise) !important; }
+.bg-primary-500 { background-color: var(--couleur-entreprise) !important; }
+.bg-primary-700 { background-color: color-mix(in srgb, var(--couleur-entreprise) 82%, black) !important; }
+.bg-primary-50  { background-color: color-mix(in srgb, var(--couleur-entreprise) 8%, white) !important; }
+.bg-primary-100 { background-color: color-mix(in srgb, var(--couleur-entreprise) 14%, white) !important; }
+.text-primary-600 { color: var(--couleur-entreprise) !important; }
+.text-primary-700 { color: color-mix(in srgb, var(--couleur-entreprise) 80%, black) !important; }
+.border-primary-500 { border-color: var(--couleur-entreprise) !important; }
+.border-primary-600 { border-color: var(--couleur-entreprise) !important; }
+
+/* --- Mode sombre : inversion globale --- */
+html.dark {
+  filter: invert(0.92) hue-rotate(180deg);
+  background: #12151c;
+}
+html.dark img,
+html.dark canvas,
+html.dark video {
+  filter: invert(0.92) hue-rotate(180deg);
+}
+html.dark body {
+  background: #12151c;
+}
+/* Les ombres redeviennent lisibles sur fond sombre */
+html.dark .card,
+html.dark .table-container {
+  box-shadow: 0 1px 3px rgb(255 255 255 / 0.08);
+}
+
+/* --- RTL (arabe) --- */
+[dir="rtl"] .text-right { text-align: left; }
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .ml-auto { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .mr-auto { margin-right: 0; margin-left: auto; }

@@ -1,0 +1,29 @@
+# =============================================
+# Koleya — override PRODUCTION (VPS Linux, HTTPS via Caddy)
+# Prérequis : le domaine pointe vers le VPS (record A), ports 80/443 ouverts.
+# Usage : docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# =============================================
+services:
+  frontend:
+    # Pas de port exposé sur l'hôte : tout passe par Caddy
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-koleyaapp.cm}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:

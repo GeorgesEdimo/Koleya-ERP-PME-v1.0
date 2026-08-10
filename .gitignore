@@ -1,0 +1,24 @@
+# Dépendances
+node_modules/
+
+# Builds
+dist/
+build/
+
+# Environnement et secrets (NE JAMAIS committer)
+.env
+.env.*
+!.env.example
+
+# Outils / caches
+.claude/
+.vercel/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# Divers
+*.local

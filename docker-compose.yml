@@ -1,0 +1,80 @@
+name: koleya
+
+# =============================================
+# Koleya — compose de base (db + migrate + backend + frontend)
+# Ne pas lancer seul : combiner avec l'override staging ou prod.
+#   staging : docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.staging.yml up -d --build
+#   prod    : docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# =============================================
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-koleya}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-koleya}
+      POSTGRES_DB: ${DB_NAME:-koleya}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-koleya} -d ${DB_NAME:-koleya}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - work_mem=8MB
+
+  migrate:
+    image: postgres:17-alpine
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:-koleya}
+      DB_USER: ${DB_USER:-koleya}
+      DB_NAME: ${DB_NAME:-koleya}
+    volumes:
+      - ./backend/migrations:/migrations:ro
+    command: ["sh", "/migrations/run.sh"]
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-koleya}
+      DB_USER: ${DB_USER:-koleya}
+      DB_PASSWORD: ${DB_PASSWORD:-koleya}
+      DB_POOL_MAX: "30"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis dans .env.docker}
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 7d
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

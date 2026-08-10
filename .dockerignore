@@ -1,0 +1,15 @@
+# Koleya — build Docker frontend
+node_modules
+dist
+backend
+deploy
+.git
+*.log
+.env
+.env.*
+.DS_Store
+docker-compose*.yml
+docker.env*
+Dockerfile.frontend
+proposition-commerciale
+cahier-des-charges

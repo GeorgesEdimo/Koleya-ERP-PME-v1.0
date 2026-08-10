@@ -1,0 +1,21 @@
+# Koleya — Caddy (HTTPS automatique Let's Encrypt)
+# DOMAIN est injecté via l'environnement du service caddy dans docker-compose.prod.yml.
+{$DOMAIN:localhost} {
+    encode gzip zstd
+
+    # Sécurité des en-têtes
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # Cache long pour les assets hachés
+    @assets {
+        path /assets/*
+    }
+    header @assets Cache-Control "public, immutable, max-age=31536000"
+
+    reverse_proxy frontend:80
+}
