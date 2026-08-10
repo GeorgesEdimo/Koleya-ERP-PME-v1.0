@@ -83,3 +83,4 @@ Caddy génère et renouvelle automatiquement le certificat Let's Encrypt.
 | `backend` | API Express sur `:3001` (JWT, abonnements, quotas, admin) |
 | `frontend` | Build Vite servi par Nginx, reverse-proxy `/api` → backend |
 | `caddy` (prod) | HTTPS automatique, compression, en-têtes de sécurité |
+# Koleya-ERP-PME-v1.0
