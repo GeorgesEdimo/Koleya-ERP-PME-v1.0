@@ -10,7 +10,7 @@
     { "src": "/(.*)", "dest": "/index.html" }
   ],
   "functions": {
-    "api/**/*.js": {
+    "api/**/*.cjs": {
       "maxDuration": 10
     }
   }

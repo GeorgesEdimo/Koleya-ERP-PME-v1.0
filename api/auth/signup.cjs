@@ -1,6 +1,6 @@
-const query = require('../lib/db')
+const query = require('../lib/db.cjs')
 const bcrypt = require('bcryptjs')
-const { generateAccessToken, generateRefreshToken } = require('../lib/auth')
+const { generateAccessToken, generateRefreshToken } = require('../lib/auth.cjs')
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*')

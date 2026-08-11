@@ -1,5 +1,5 @@
-const query = require('../lib/db')
-const { handler } = require('../lib/auth')
+const query = require('../lib/db.cjs')
+const { handler } = require('../lib/auth.cjs')
 
 module.exports = handler(async (req, res) => {
   const { method } = req
