@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../../contexts/AppContext'
-import { FolderOpen, Upload, Download, Trash2, File as FileIcon, Loader2 } from 'lucide-react'
+import { FolderOpen, Upload, Download, Trash2, File as FileIcon, Loader2, Plus, FileText, Receipt, Package, CreditCard } from 'lucide-react'
 import { documentsAPI } from '../../utils/api'
+import DocumentForm from './DocumentForm'
 
 function formatTaille(octets) {
   if (octets >= 1024 * 1024) return (octets / (1024 * 1024)).toFixed(1) + ' Mo'
@@ -10,10 +11,15 @@ function formatTaille(octets) {
 }
 
 export default function Documents() {
-  const { refresh } = useApp()
+  const { refresh, state } = useApp()
   const [docs, setDocs] = useState([])
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [typeSelectionne, setTypeSelectionne] = useState(null)
+  const [historique, setHistorique] = useState(() => {
+    return JSON.parse(localStorage.getItem('koleya_documents') || '[]')
+  })
   const fileRef = useRef(null)
 
   const charger = async () => {
@@ -63,15 +69,63 @@ export default function Documents() {
 
   const totalTaille = docs.reduce((s, d) => s + d.taille, 0)
 
+  const handleGenererDocument = (data) => {
+    const doc = {
+      id: Date.now().toString(),
+      ...data,
+      entreprise_nom: state.entreprise?.nom,
+      cree_le: new Date().toISOString(),
+    }
+    const updated = [doc, ...historique]
+    localStorage.setItem('koleya_documents', JSON.stringify(updated))
+    setHistorique(updated)
+    setShowForm(false)
+    setTypeSelectionne(null)
+    setMsg(`Document ${data.numero} genere avec succes`)
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  const TYPES_DOCS = [
+    { id: 'facture', label: 'Facture', icon: FileText },
+    { id: 'facture_fiscale', label: 'Facture fiscale', icon: FileText },
+    { id: 'facture_proforma', label: 'Facture proforma', icon: FileText },
+    { id: 'recu', label: 'Recu', icon: Receipt },
+    { id: 'recu_vente', label: 'Recu de vente', icon: Receipt },
+    { id: 'recu_caisse', label: 'Recu de caisse', icon: Receipt },
+    { id: 'devis', label: 'Devis', icon: FileText },
+    { id: 'note_credit', label: 'Note de credit', icon: CreditCard },
+    { id: 'bon_commande', label: 'Bon de commande', icon: Package },
+    { id: 'bon_livraison', label: 'Bon de livraison', icon: Package },
+  ]
+
+  const counts = {}
+  historique.forEach(d => { counts[d.type] = (counts[d.type] || 0) + 1 })
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <FolderOpen className="w-5 h-5 text-primary-600" />
         <h1 className="page-title">Documents</h1>
       </div>
-      <p className="text-sm text-dark-500">Téléversez vos documents administratifs : contrats, pièces, factures scannées… (PDF, images, Word, Excel, max 10 Mo)</p>
+      <p className="text-sm text-dark-500">Generez des factures, recus, devis, bons et notes de credit avec des templates professionnels, ou televersez vos propres fichiers.</p>
 
       {msg && <div className="rounded-xl bg-success-50 border border-success-200 px-4 py-2 text-sm text-success-700">{msg}</div>}
+
+      {/* Generer des documents */}
+      <div className="card p-4">
+        <h3 className="text-sm font-semibold text-dark-900 mb-3">Generer un document</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {TYPES_DOCS.map(dt => (
+            <button key={dt.id}
+              onClick={() => { setTypeSelectionne(dt.id); setShowForm(true) }}
+              className="card-hover p-3 text-center">
+              <dt.icon className="w-6 h-6 mx-auto mb-1 text-primary-600" />
+              <p className="text-xs font-medium text-dark-900">{dt.label}</p>
+              <p className="text-[10px] text-dark-400">{counts[dt.id] || 0} genere(s)</p>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-3 text-sm text-dark-600">
@@ -141,6 +195,51 @@ export default function Documents() {
           </tbody>
         </table>
       </div>
+
+      {/* Historique des documents generes */}
+      {historique.length > 0 && (
+        <div className="card">
+          <div className="px-5 py-4 border-b border-dark-100">
+            <h3 className="text-base font-semibold text-dark-900">Documents generes ({historique.length})</h3>
+          </div>
+          <div className="divide-y divide-dark-100">
+            {historique.slice(0, 15).map(d => (
+              <div key={d.id} className="px-5 py-3 flex items-center justify-between hover:bg-dark-50/50">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-4 h-4 text-primary-600" />
+                  <div>
+                    <p className="text-sm font-medium text-dark-900">{d.numero}</p>
+                    <p className="text-xs text-dark-500">{d.destinataire_nom || '—'} — {new Date(d.cree_le).toLocaleDateString('fr-FR')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="badge bg-primary-50 text-primary-700">{d.type?.replace('_', ' ')}</span>
+                  <span className="text-sm font-semibold">{formatFCFA(d.totalTTC || 0)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal DocumentForm */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-3xl shadow-xl my-8">
+            <div className="px-6 py-4 border-b border-dark-100 flex justify-between sticky top-0 bg-white z-10">
+              <h3 className="text-lg font-semibold text-dark-900">
+                {typeSelectionne ? `Nouveau ${TYPES_DOCS.find(d => d.id === typeSelectionne)?.label || 'document'}` : 'Nouveau document'}
+              </h3>
+              <button onClick={() => { setShowForm(false); setTypeSelectionne(null) }} className="p-1 rounded-lg hover:bg-dark-100">
+                <span className="text-dark-400"><span className="sr-only">Fermer</span>X</span>
+              </button>
+            </div>
+            <div className="p-6">
+              <DocumentForm onGenerer={handleGenererDocument} typeInitial={typeSelectionne || 'facture'} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

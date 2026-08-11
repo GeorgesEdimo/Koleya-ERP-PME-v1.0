@@ -21,7 +21,10 @@
     "jspdf-autotable": "^3.8.1",
     "lucide-react": "^0.294.0",
     "date-fns": "^3.0.0",
-    "framer-motion": "^10.16.16"
+    "framer-motion": "^10.16.16",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.0",

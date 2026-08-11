@@ -216,14 +216,37 @@ export const abonnementAPI = {
 }
 
 // =============================================
-// ADMIN (super admin plateforme : voir + restaurer)
+// ADMIN (super admin plateforme — CRUD complet)
 // =============================================
 export const adminAPI = {
-  entreprises: () => apiRequest('/admin/entreprises'),
+  // Entreprises
+  entreprises: (params = {}) => { const qs = new URLSearchParams(params).toString(); return apiRequest(`/admin/entreprises${qs ? '?' + qs : ''}`) },
   entreprise: (id) => apiRequest(`/admin/entreprises/${id}`),
+  updateEntreprise: (id, data) => apiRequest(`/admin/entreprises/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteEntreprise: (id) => apiRequest(`/admin/entreprises/${id}`, { method: 'DELETE' }),
+
+  // Utilisateurs
+  utilisateurs: (params = {}) => { const qs = new URLSearchParams(params).toString(); return apiRequest(`/admin/utilisateurs${qs ? '?' + qs : ''}`) },
+  createUser: (data) => apiRequest('/admin/utilisateurs', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (id, data) => apiRequest(`/admin/utilisateurs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteUser: (id) => apiRequest(`/admin/utilisateurs/${id}`, { method: 'DELETE' }),
+
+  // Ressources d'une entreprise (CRUD complet)
   ressource: (id, ressource, supprimes) =>
     apiRequest(`/admin/entreprises/${id}/${ressource}${supprimes ? '?supprimes=true' : ''}`),
+  createRessource: (entrepriseId, ressource, data) =>
+    apiRequest(`/admin/entreprises/${entrepriseId}/${ressource}`, { method: 'POST', body: JSON.stringify(data) }),
+  updateRessource: (entrepriseId, ressource, itemId, data) =>
+    apiRequest(`/admin/entreprises/${entrepriseId}/${ressource}/${itemId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteRessource: (entrepriseId, ressource, itemId) =>
+    apiRequest(`/admin/entreprises/${entrepriseId}/${ressource}/${itemId}`, { method: 'DELETE' }),
+
+  // Restauration
   restaurer: (table, id) => apiRequest(`/admin/restaurer/${table}/${id}`, { method: 'POST' }),
+  restaurerTous: (table, entrepriseId) => apiRequest(`/admin/restaurer-tous/${table}/${entrepriseId}`, { method: 'POST' }),
+
+  // Stats plateforme
+  stats: () => apiRequest('/admin/stats'),
 }
 
 // =============================================

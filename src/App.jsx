@@ -16,6 +16,8 @@ import { Loader2 } from 'lucide-react'
 // Pages publiques (legeres)
 const Landing = lazy(() => import('./components/Landing/Landing'))
 const Auth = lazy(() => import('./components/Auth/Auth'))
+const TwoFactorVerify = lazy(() => import('./components/Auth/TwoFactorVerify'))
+const ForgotPassword = lazy(() => import('./components/Auth/ForgotPassword'))
 
 // Pages admin (lourdes, chargees apres login)
 const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'))
@@ -29,6 +31,8 @@ const RH = lazy(() => import('./components/RH/RH'))
 const Devis = lazy(() => import('./components/Devis/Devis'))
 const ClientPortal = lazy(() => import('./components/ClientPortal/ClientPortal'))
 const Rapports = lazy(() => import('./components/Rapports/Rapports'))
+const Ventes = lazy(() => import('./components/Ventes/Ventes'))
+const Achats = lazy(() => import('./components/Achats/Achats'))
 const Notifications = lazy(() => import('./components/Notifications/Notifications'))
 const Parametres = lazy(() => import('./components/Parametres/Parametres'))
 const Clients = lazy(() => import('./components/Clients/Clients'))
@@ -93,6 +97,9 @@ function AppRoutes() {
         {/* Authentification */}
         <Route path="/login" element={<Auth />} />
         <Route path="/signup" element={<Auth />} />
+        <Route path="/verify-2fa" element={<TwoFactorVerify />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ForgotPassword />} />
 
         {/* Application */}
         <Route path="/app" element={
@@ -105,6 +112,8 @@ function AppRoutes() {
           <Route path="facturation/nouvelle" element={<NouvelleFacture />} />
           <Route path="facturation/nouvelle/:type" element={<NouvelleFacture />} />
           <Route path="devis" element={<Devis />} />
+          <Route path="ventes" element={<Ventes />} />
+          <Route path="achats" element={<Achats />} />
           <Route path="credit" element={<CreditClient />} />
           <Route path="clients" element={<Clients />} />
           <Route path="documents" element={<Documents />} />

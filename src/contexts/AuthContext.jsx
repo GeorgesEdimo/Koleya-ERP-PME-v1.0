@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { authAPI } from '../utils/api'
+import { authAPI, apiRequest } from '../utils/api'
 
 const AuthContext = createContext()
 
@@ -82,8 +82,40 @@ export function AuthProvider({ children }) {
     Promise.reject(new Error('Connexion SMS non disponible. Utilisez votre email.'))
   const verifySMS = () =>
     Promise.reject(new Error('Vérification SMS non disponible.'))
-  const resetPassword = () =>
-    Promise.reject(new Error('Réinitialisation de mot de passe non disponible. Contactez le support.'))
+
+  // 2FA — Activer
+  const activer2FA = async (canal = 'sms') => {
+    const res = await apiRequest('/auth/2fa/activer', { method: 'POST', body: JSON.stringify({ canal }) })
+    return res
+  }
+
+  // 2FA — Verifier le code
+  const verifier2FA = async (code) => {
+    const res = await apiRequest('/auth/2fa/verifier', { method: 'POST', body: JSON.stringify({ code }) })
+    if (res.accessToken) {
+      // Mettre a jour le token avec le flag 2FA verifie
+      localStorage.setItem('koleya_access_token', res.accessToken)
+    }
+    return res
+  }
+
+  // 2FA — Desactiver
+  const desactiver2FA = async () => {
+    return await apiRequest('/auth/2fa/desactiver', { method: 'POST' })
+  }
+
+  // Reinitialisation MDP — Envoyer le lien
+  const forgotPassword = async (email) => {
+    return await apiRequest('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) })
+  }
+
+  // Reinitialisation MDP — Confirmer
+  const resetPassword = async (token, nouveauMdp, codeSms) => {
+    return await apiRequest('/auth/reset-password/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ token, nouveau_mdp: nouveauMdp, code_sms: codeSms }),
+    })
+  }
 
   const value = {
     user,
@@ -94,6 +126,10 @@ export function AuthProvider({ children }) {
     verifySMS,
     signup,
     logout,
+    activer2FA,
+    verifier2FA,
+    desactiver2FA,
+    forgotPassword,
     resetPassword,
     isAuthenticated: !!user,
   }

@@ -20,6 +20,7 @@ const paiementRoutes = require('./routes/paiements')
 const abonnementRoutes = require('./routes/abonnement')
 const adminRoutes = require('./routes/admin')
 const documentsRoutes = require('./routes/documents')
+const twoFactorRoutes = require('./routes/twoFactor')
 
 const isProd = process.env.NODE_ENV === 'production'
 
@@ -122,6 +123,7 @@ app.use('/api/stock-avance', stockAvanceRoutes)
 app.use('/api/comptabilite', comptabiliteRoutes)
 app.use('/api/paiements', paiementRoutes)
 app.use('/api/documents', documentsRoutes)
+app.use('/api/auth', twoFactorRoutes)
 
 // Health check (sans dépendance BD)
 app.get('/api/health', (req, res) => {

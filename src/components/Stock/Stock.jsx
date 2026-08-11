@@ -3,9 +3,10 @@ import { useApp } from '../../contexts/AppContext'
 import { useAbonnement } from '../../contexts/AbonnementContext'
 import {
   Plus, Package, AlertTriangle, Search, Edit3, Trash2,
-  TrendingDown, TrendingUp, BarChart3, Filter, Download
+  TrendingDown, TrendingUp, BarChart3, Filter, Download, Image, QrCode
 } from 'lucide-react'
 import { generateTablePDF } from '../Facturation/pdfGenerator'
+import { genererQRProduit } from '../../utils/qrcode'
 
 const formatFCFA = (n) => new Intl.NumberFormat('fr-CM').format(n) + ' FCFA'
 
@@ -43,7 +44,7 @@ export default function Stock() {
 
   const [form, setForm] = useState({
     nom: '', reference: '', categorie: 'Fournitures', stock: '', stockMin: '',
-    prixAchat: '', prixVente: '', fournisseur: ''
+    prixAchat: '', prixVente: '', fournisseur: '', photo: null, codeBarres: ''
   })
 
   const categories = ['toutes', ...new Set(state.produits.map(p => p.categorie))]
@@ -70,6 +71,8 @@ export default function Stock() {
       ...form,
       stock: parseInt(form.stock) || 0,
       stockMin: parseInt(form.stockMin) || 0,
+      photo: form.photo || null,
+      codeBarres: form.codeBarres || '',
       prixAchat: parseInt(form.prixAchat) || 0,
       prixVente: parseInt(form.prixVente) || 0,
     }
@@ -83,7 +86,7 @@ export default function Stock() {
   }
 
   const resetForm = () => {
-    setForm({ nom: '', reference: '', categorie: 'Fournitures', stock: '', stockMin: '', prixAchat: '', prixVente: '', fournisseur: '' })
+    setForm({ nom: '', reference: '', categorie: 'Fournitures', stock: '', stockMin: '', prixAchat: '', prixVente: '', fournisseur: '', photo: null, codeBarres: '' })
     setEditId(null)
     setShowModal(false)
   }
@@ -98,6 +101,8 @@ export default function Stock() {
       prixAchat: produit.prixAchat,
       prixVente: produit.prixVente,
       fournisseur: produit.fournisseur || '',
+      photo: produit.photo || null,
+      codeBarres: produit.codeBarres || '',
     })
     setEditId(produit.id)
     setShowModal(true)
@@ -213,7 +218,18 @@ export default function Stock() {
           <tbody>
             {produits.map((p) => (
               <tr key={p.id}>
-                <td className="font-medium">{p.nom}</td>
+                <td className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {p.photo ? (
+                      <img src={p.photo} alt="" className="w-8 h-8 rounded object-cover border border-dark-200" />
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-dark-100 flex items-center justify-center">
+                        <Package className="w-4 h-4 text-dark-400" />
+                      </div>
+                    )}
+                    {p.nom}
+                  </div>
+                </td>
                 <td className="text-dark-600 text-sm font-mono">{p.reference}</td>
                 <td><span className="badge bg-primary-50 text-primary-700">{p.categorie}</span></td>
                 <td>{formatFCFA(p.prixAchat)}</td>
@@ -229,6 +245,12 @@ export default function Stock() {
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => handleAjuster(p.id)} className="p-1.5 rounded-lg hover:bg-primary-50 text-primary-600" title="Ajuster stock">
                       <TrendingUp className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => {
+                      const url = genererQRProduit(p)
+                      window.open(url, '_blank')
+                    }} className="p-1.5 rounded-lg hover:bg-accent-50 text-accent-600" title="QR Code">
+                      <QrCode className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleEdit(p)} className="p-1.5 rounded-lg hover:bg-dark-100 text-dark-500" title="Modifier">
                       <Edit3 className="w-4 h-4" />
@@ -298,6 +320,34 @@ export default function Stock() {
                 <div className="col-span-2">
                   <label className="input-label">Fournisseur</label>
                   <input type="text" value={form.fournisseur} onChange={(e) => setForm({ ...form, fournisseur: e.target.value })} className="input" />
+                </div>
+                <div className="col-span-2">
+                  <label className="input-label">Code-barres</label>
+                  <input type="text" value={form.codeBarres} onChange={(e) => setForm({ ...form, codeBarres: e.target.value })} className="input" placeholder="Code-barres du produit (optionnel)" />
+                </div>
+                <div className="col-span-2">
+                  <label className="input-label">Photo du produit</label>
+                  <p className="text-[10px] text-dark-400 mb-1">Image du produit (max 2 Mo, JPG/PNG)</p>
+                  <div className="flex items-center gap-3">
+                    {form.photo ? (
+                      <div className="relative">
+                        <img src={form.photo} alt="Photo" className="h-16 w-16 object-cover rounded-lg border border-dark-200" />
+                        <button onClick={() => setForm({ ...form, photo: null })} className="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-white rounded-full text-[10px] flex items-center justify-center">x</button>
+                      </div>
+                    ) : (
+                      <label className="w-16 h-16 border-2 border-dashed border-dark-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 transition-colors">
+                        <Image className="w-5 h-5 text-dark-400" />
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          const file = e.target.files[0]
+                          if (!file) return
+                          if (file.size > 2 * 1024 * 1024) { alert('Image trop volumineuse (max 2 Mo)'); return }
+                          const reader = new FileReader()
+                          reader.onload = (ev) => setForm({ ...form, photo: ev.target.result })
+                          reader.readAsDataURL(file)
+                        }} />
+                      </label>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-end gap-3 pt-2">

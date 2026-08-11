@@ -9,6 +9,8 @@ const pageTitles = {
   '/app': 'Tableau de bord',
   '/app/facturation': 'Facturation',
   '/app/devis': 'Devis',
+  '/app/ventes': 'Ventes',
+  '/app/achats': 'Achats',
   '/app/credit': 'Crédit Client',
   '/app/clients': 'Clients',
   '/app/stock': 'Gestion de Stock',

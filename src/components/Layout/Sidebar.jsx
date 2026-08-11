@@ -5,13 +5,15 @@ import { usePreferences } from '../../contexts/PreferencesContext'
 import {
   LayoutDashboard, FileText, CreditCard, Package,
   Calculator, Users, Settings, X, Receipt, Building2,
-  FileOutput, LogOut, Bell, BarChart3, UserCheck, ShieldCheck, FolderOpen
+  FileOutput, LogOut, Bell, BarChart3, UserCheck, ShieldCheck, FolderOpen, ShoppingCart
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Tableau de bord', href: '/app', icon: LayoutDashboard },
   { name: 'Facturation', href: '/app/facturation', icon: FileText },
   { name: 'Devis', href: '/app/devis', icon: FileOutput },
+  { name: 'Ventes', href: '/app/ventes', icon: ShoppingCart },
+  { name: 'Achats', href: '/app/achats', icon: Package },
   { name: 'Crédit Client', href: '/app/credit', icon: CreditCard },
   { name: 'Clients', href: '/app/clients', icon: Users },
   { name: 'Stock', href: '/app/stock', icon: Package },

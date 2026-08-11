@@ -8,7 +8,7 @@ import {
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { login, loginBySMS, verifySMS, signup, resetPassword, loading } = useAuth()
+  const { login, loginBySMS, verifySMS, signup, forgotPassword, loading } = useAuth()
 
   const [mode, setMode] = useState('login') // login | signup | sms | sms-verify | forgot
   const [error, setError] = useState('')
@@ -88,9 +88,9 @@ export default function Auth() {
     e.preventDefault()
     setError('')
     try {
-      await resetPassword(forgotEmail)
-      setSuccess('Email de réinitialisation envoyé ! (Simulation)')
-      setTimeout(() => setMode('login'), 3000)
+      await forgotPassword(forgotEmail)
+      setSuccess('Si cet email existe, un lien de reinitialisation a ete envoye. Verifiez votre boite mail.')
+      setTimeout(() => setMode('login'), 4000)
     } catch (err) {
       setError(err.message)
     }
@@ -195,8 +195,8 @@ export default function Auth() {
                     <input type="checkbox" className="rounded border-dark-300" />
                     Se souvenir de moi
                   </label>
-                  <button type="button" onClick={() => { setMode('forgot'); resetForms() }} className="text-sm text-primary-600 hover:underline">
-                    Mot de passe oublié ?
+                  <button type="button" onClick={() => navigate('/forgot-password')} className="text-sm text-primary-600 hover:underline">
+                    Mot de passe oublie ?
                   </button>
                 </div>
 

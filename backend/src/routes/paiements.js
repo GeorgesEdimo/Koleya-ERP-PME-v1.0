@@ -156,7 +156,182 @@ router.post('/callback/flutterwave', async (req, res) => {
   }
 })
 
-// GET /api/paiements/historique
+// =============================================
+// PAIEMENT BANCAIRE — Stripe
+// =============================================
+router.post('/stripe', async (req, res) => {
+  try {
+    const { facture_id, montant } = req.body
+    if (!facture_id || !montant) return res.status(400).json({ error: 'Facture et montant requis' })
+
+    const result = await query(`
+      SELECT f.*, c.nom AS client_nom, c.email AS client_email
+      FROM factures f JOIN clients c ON f.client_id = c.id
+      WHERE f.id = $1 AND f.entreprise_id = $2
+    `, [facture_id, req.entrepriseId])
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Facture non trouvee' })
+
+    const f = result.rows[0]
+    if (montant > f.reste) return res.status(400).json({ error: 'Montant superieur au reste' })
+
+    const stripeService = require('../services/stripeService')
+    const session = await stripeService.creerSessionPaiement({
+      montant: parseInt(montant),
+      description: `Paiement facture ${f.numero}`,
+      facture_id,
+      client_email: f.client_email,
+    })
+
+    // Enregistrer le paiement
+    await query(
+      `INSERT INTO paiements (entreprise_id, facture_id, montant, methode, transaction_id, provider, statut, stripe_session_id, notes)
+       VALUES ($1, $2, $3, 'carte', $4, 'stripe', 'en_attente', $5, 'Paiement carte bancaire')`,
+      [req.entrepriseId, facture_id, montant, session.session_id, session.session_id]
+    )
+
+    res.json(session)
+  } catch (err) {
+    console.error('Erreur Stripe:', err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// =============================================
+// PAIEMENT PAR PREUVES (upload recu)
+// =============================================
+router.post('/preuve', async (req, res) => {
+  try {
+    const { facture_id, montant, methode, preuve_url, preuve_filename, notes } = req.body
+    if (!facture_id || !montant) return res.status(400).json({ error: 'Facture et montant requis' })
+
+    const result = await query(`
+      SELECT f.*, c.nom AS client_nom FROM factures f
+      JOIN clients c ON f.client_id = c.id
+      WHERE f.id = $1 AND f.entreprise_id = $2
+    `, [facture_id, req.entrepriseId])
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Facture non trouvee' })
+
+    const f = result.rows[0]
+
+    const paiement = await query(
+      `INSERT INTO paiements (entreprise_id, facture_id, montant, methode, statut, preuve_url, preuve_filename, notes)
+       VALUES ($1, $2, $3, $4, 'en_attente', $5, $6, $7) RETURNING *`,
+      [req.entrepriseId, facture_id, montant, methode || 'preuve', preuve_url, preuve_filename, notes]
+    )
+
+    res.status(201).json({
+      ...paiement.rows[0],
+      message: 'Preuve de paiement enregistree. En attente de validation.',
+    })
+  } catch (err) {
+    console.error('Erreur preuve paiement:', err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// PUT /api/paiements/:id/valider — Valider un paiement par preuve
+router.put('/:id/valider', async (req, res) => {
+  try {
+    const result = await query(
+      `UPDATE paiements SET statut = 'paye', date_paiement = NOW()
+       WHERE id = $1 AND entreprise_id = $2 AND statut = 'en_attente'
+       RETURNING *`,
+      [req.params.id, req.entrepriseId]
+    )
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Paiement non trouve ou deja valide' })
+
+    const p = result.rows[0]
+
+    // Mettre a jour la facture
+    const facture = await query('SELECT * FROM factures WHERE id = $1', [p.facture_id])
+    if (facture.rows.length > 0) {
+      const f = facture.rows[0]
+      const nouveauPaye = parseFloat(f.paye) + parseFloat(p.montant)
+      const nouveauStatut = nouveauPaye >= f.total ? 'payee' : 'en_attente'
+      await query(
+        'UPDATE factures SET paye = $1, reste = total - $1, statut = $2 WHERE id = $3',
+        [nouveauPaye, nouveauStatut, f.id]
+      )
+    }
+
+    res.json({ message: 'Paiement valide', paiement: p })
+  } catch (err) {
+    console.error('Erreur validation paiement:', err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// =============================================
+// HISTORIQUE
+// =============================================
+router.get('/historique', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT p.*, f.numero AS facture_numero, c.nom AS client_nom
+       FROM paiements p
+       JOIN factures f ON p.facture_id = f.id
+       JOIN clients c ON f.client_id = c.id
+       WHERE p.entreprise_id = $1
+       ORDER BY p.cree_le DESC
+       LIMIT 50`,
+      [req.entrepriseId]
+    )
+    res.json(result.rows)
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// =============================================
+// WEBHOOK STRIPE
+// =============================================
+router.post('/callback/stripe', async (req, res) => {
+  try {
+    const stripeService = require('../services/stripeService')
+    const { valide, data } = stripeService.verifierWebhook(
+      JSON.stringify(req.body),
+      req.headers['stripe-signature']
+    )
+
+    if (!valide) return res.status(400).json({ error: 'Signature invalide' })
+
+    if (data.type === 'checkout.session.completed') {
+      const session_id = data.data.object.id
+      const paiement = await query(
+        'SELECT * FROM paiements WHERE stripe_session_id = $1',
+        [session_id]
+      )
+      if (paiement.rows.length > 0) {
+        await query(
+          `UPDATE paiements SET statut = 'paye', date_paiement = NOW() WHERE id = $1`,
+          [paiement.rows[0].id]
+        )
+        // Mettre a jour la facture
+        const f = await query('SELECT * FROM factures WHERE id = $1', [paiement.rows[0].facture_id])
+        if (f.rows.length > 0) {
+          const nouveauPaye = parseFloat(f.rows[0].paye) + parseFloat(paiement.rows[0].montant)
+          const nouveauStatut = nouveauPaye >= f.rows[0].total ? 'payee' : 'en_attente'
+          await query(
+            'UPDATE factures SET paye = $1, reste = total - $1, statut = $2 WHERE id = $3',
+            [nouveauPaye, nouveauStatut, f.rows[0].id]
+          )
+        }
+      }
+    }
+
+    res.json({ received: true })
+  } catch (err) {
+    console.error('Erreur webhook Stripe:', err)
+    res.json({ received: true })
+  }
+})
+
+// =============================================
+// HISTORIQUE
+// =============================================
 router.get('/historique', async (req, res) => {
   try {
     const result = await query(
