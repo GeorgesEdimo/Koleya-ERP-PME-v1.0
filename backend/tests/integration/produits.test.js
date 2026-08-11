@@ -3,7 +3,7 @@
  */
 
 const request = require('supertest')
-const app = require('../src/server')
+const app = require('../../src/server')
 
 describe('API Produits — Integration', () => {
   let token = ''
@@ -50,26 +50,26 @@ describe('API Produits — Integration', () => {
     })
   })
 
-  describe('PUT /api/produits', () => {
+  describe('PUT /api/produits/:id', () => {
     it('met a jour un produit', async () => {
       if (!produitId) return
 
       const res = await request(app)
-        .put('/api/produits')
+        .put(`/api/produits/${produitId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ id: produitId, stock: 150 })
+        .send({ stock: 150 })
 
       expect(res.status).toBe(200)
       expect(res.body.stock).toBe(150)
     })
   })
 
-  describe('DELETE /api/produits', () => {
+  describe('DELETE /api/produits/:id', () => {
     it('supprime un produit', async () => {
       if (!produitId) return
 
       const res = await request(app)
-        .delete(`/api/produits?id=${produitId}`)
+        .delete(`/api/produits/${produitId}`)
         .set('Authorization', `Bearer ${token}`)
 
       expect(res.status).toBe(200)

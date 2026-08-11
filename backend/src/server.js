@@ -144,31 +144,32 @@ app.use((err, req, res, next) => {
 // =============================================
 // DEMARRAGE + ARRET GRACIEUX
 // =============================================
-const server = app.listen(PORT, () => {
-  console.log(`
+// Ne demarrer le serveur que si ce fichier est execute directement (pas importe par un test)
+if (require.main === module) {
+  const server = app.listen(PORT, () => {
+    console.log(`
   ╔══════════════════════════════════════╗
   ║   Koleya API — ERP PME              ║
   ║   Port: ${PORT}                       ║
   ║   Env: ${process.env.NODE_ENV || 'development'}                    ║
   ╚══════════════════════════════════════╝
-  `)
-})
-
-// Fermeture propre : on arrête d'accepter des requêtes, on vide le pool, puis on sort
-function shutdown(signal) {
-  console.log(`\n${signal} reçu, arrêt en cours…`)
-  server.close(async () => {
-    try {
-      await closePool()
-    } finally {
-      process.exit(0)
-    }
+    `)
   })
-  // Sécurité : force l'arrêt après 10s
-  setTimeout(() => process.exit(1), 10000).unref()
-}
 
-process.on('SIGTERM', () => shutdown('SIGTERM'))
-process.on('SIGINT', () => shutdown('SIGINT'))
+  function shutdown(signal) {
+    console.log(`\n${signal} recu, arret en cours...`)
+    server.close(async () => {
+      try {
+        await closePool()
+      } finally {
+        process.exit(0)
+      }
+    })
+    setTimeout(() => process.exit(1), 10000).unref()
+  }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+  process.on('SIGINT', () => shutdown('SIGINT'))
+}
 
 module.exports = app

@@ -1,7 +1,7 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const { query } = require('../config/database')
-const { authenticate, generateAccessToken } = require('../lib/auth')
+const { authenticate, generateAccessToken } = require('../middleware/auth')
 const twoFactorService = require('../services/twoFactorService')
 
 const router = express.Router()
@@ -123,7 +123,7 @@ router.get('/google/callback', async (req, res) => {
     }
 
     const accessToken = generateAccessToken(user.rows[0])
-    const refreshToken = require('../lib/auth').generateRefreshToken(user.rows[0])
+    const refreshToken = require('../middleware/auth').generateRefreshToken(user.rows[0])
 
     // Rediriger vers le frontend avec les tokens
     res.redirect(`${process.env.FRONTEND_URL}/app?token=${accessToken}`)

@@ -1,6 +1,6 @@
 const express = require('express')
 const { query } = require('../config/database')
-const { handler } = require('../lib/auth')
+const { handler } = require('../middleware/auth')
 
 const router = express.Router()
 router.use(handler)

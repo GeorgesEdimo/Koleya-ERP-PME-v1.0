@@ -3,7 +3,7 @@
  */
 
 const request = require('supertest')
-const app = require('../src/server')
+const app = require('../../src/server')
 
 describe('API Clients — Integration', () => {
   let token = ''
@@ -53,26 +53,26 @@ describe('API Clients — Integration', () => {
     })
   })
 
-  describe('PUT /api/clients', () => {
+  describe('PUT /api/clients/:id', () => {
     it('met a jour un client', async () => {
       if (!clientId) return
 
       const res = await request(app)
-        .put('/api/clients')
+        .put(`/api/clients/${clientId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ id: clientId, nom: 'Client Modifie', telephone: '+237699555666' })
+        .send({ nom: 'Client Modifie', telephone: '+237699555666' })
 
       expect(res.status).toBe(200)
       expect(res.body.nom).toBe('Client Modifie')
     })
   })
 
-  describe('DELETE /api/clients', () => {
+  describe('DELETE /api/clients/:id', () => {
     it('supprime un client', async () => {
       if (!clientId) return
 
       const res = await request(app)
-        .delete(`/api/clients?id=${clientId}`)
+        .delete(`/api/clients/${clientId}`)
         .set('Authorization', `Bearer ${token}`)
 
       expect(res.status).toBe(200)

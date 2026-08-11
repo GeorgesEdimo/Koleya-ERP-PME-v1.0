@@ -5,7 +5,7 @@
  */
 
 const request = require('supertest')
-const app = require('../src/server')
+const app = require('../../src/server')
 
 describe('API Auth — Integration', () => {
   let accessToken = ''
