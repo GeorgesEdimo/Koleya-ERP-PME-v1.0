@@ -1,0 +1,46 @@
+name: Superviseur - Auto Validation & Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  supervise:
+    # Uniquement pour les PRs créées par les agents
+    if: contains(github.event.pull_request.labels.*.name, 'agent-generated')
+    runs-on: ubuntu-latest
+
+    env:
+      AGENT_GITHUB_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+      AGENT_VERCEL_TOKEN: ${{ secrets.AGENT_VERCEL_TOKEN }}
+      AGENT_SUPABASE_KEY: ${{ secrets.AGENT_SUPABASE_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd supervisor && npm install
+
+      - name: Run Superviseur Validation
+        run: |
+          node supervisor/cli.js validate \
+            --owner ${{ github.repository_owner }} \
+            --repo ${{ github.event.repository.name }} \
+            --pr ${{ github.event.pull_request.number }}
+
+      - name: Log Result
+        if: always()
+        run: |
+          echo "✅ Superviseur validation completed"
+          echo "PR: ${{ github.event.pull_request.html_url }}"
+          echo "Status: ${{ job.status }}"

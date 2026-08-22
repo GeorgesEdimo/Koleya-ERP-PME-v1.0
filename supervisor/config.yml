@@ -1,0 +1,46 @@
+# Supervisor Agent Configuration
+
+validation:
+  code_quality:
+    min_coverage: 80
+    max_linting_warnings: 10
+    eslint_errors: 0
+    security_critical: 0
+
+  performance:
+    api_response_ms: 200
+    frontend_fps: 60
+    bundle_size_increase_kb: 100
+
+  accessibility:
+    wcag_level: "AA"
+    lighthouse_min_score: 85
+
+  security:
+    owasp_critical: 0
+    dependency_vulnerabilities_critical: 0
+    secrets_detected: 0
+
+requirements:
+  min_coverage_ratio: 0.5  # Au moins 50% des keywords trouvés
+
+auto_actions:
+  merge_on_success: true
+  deploy_staging_on_merge: true
+  deploy_production_on_merge: false  # Manuel pour prod
+  notify_slack: true
+  close_duplicate_issues: false
+
+notifications:
+  slack:
+    enabled: true
+    channel: "#koleya-agents"
+    on_approve: true
+    on_reject: true
+    on_deploy: true
+    on_error: true
+
+  email:
+    enabled: false
+    to: "team@koleya.local"
+    on_critical_only: true
