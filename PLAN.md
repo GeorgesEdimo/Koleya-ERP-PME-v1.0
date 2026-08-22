@@ -1,503 +1,740 @@
-# KOLEYA ERP — PLAN DE PROJET COMPLET
+# KOLEYA ERP — PLAN D'EXECUTION DU BLOC DE MODIFICATIONS
 
-**Version :** 2.0
-**Date :** 10 aout 2026
-**Auteur :** Georges Edimo — CEO & Fondateur
-**Statut :** En cours de development
+**Version :** 3.0
+**Date :** 12 aout 2026
+**Statut :** En attente de validation "GO"
 
 ---
 
 ## TABLE DES MATIERES
 
-1. [Resume executif](#1-resume-executif)
-2. [Analyse du marche](#2-analyse-du-marche)
-3. [Architecture technique](#3-architecture-technique)
-4. [Modele de donnees (MCD/MLD/MPD/MCV)](#4-modele-de-donnees)
-5. [Modules fonctionnels](#5-modules-fonctionnels)
-6. [Cas d'utilisation](#6-cas-dutilisation)
-7. [Etat actuel du projet](#7-etat-actuel)
-8. [Nouvelles fonctionnalites demandees](#8-nouvelles-fonctionnalites)
-9. [Plan de travail detaille](#9-plan-de-travail)
-10. [Analyse des risques](#10-analyse-des-risques)
-11. [Projections financieres](#11-projections-financieres)
-12. [Stack technique](#12-stack-technique)
+1. [Resume du bloc](#1-resume)
+2. [Phase 0 — Fix Vercel](#phase-0--fix-vercel)
+3. [Phase 1 — Module Facture (9 types)](#phase-1--module-facture)
+4. [Phase 2 — Module Devis (9 types)](#phase-2--module-devis)
+5. [Phase 3 — Module RH (14 documents)](#phase-3--module-rh)
+6. [Phase 4 — Recherche/Filtres + Archivage/Historique](#phase-4--recherche-archivage)
+7. [Phase 5 — Portail Client (optionnel)](#phase-5--portail-client)
+8. [Migrations SQL a creer](#migrations)
+9. [Liste complete des fichiers](#fichiers)
+10. [Checklist de verification](#checklist)
 
 ---
 
-## 1. RESUME EXECUTIF
+## 1. RESUME DU BLOC
 
-**Koleya** est un ERP SaaS concu pour les PME camerounaises et africaines. Il centralise la facturation, les credits, le stock, les ventes, les achats, la comptabilite, les RH et les notifications dans une seule plateforme accessible depuis un smartphone.
+Ce bloc couvre l'ensemble des modifications demandees par l'utilisateur pour passer de l'etat actuel (Vercel casse, formulaires incomplets, RH minimaliste) a un ERP complet et fonctionnel.
 
-**Probleme :** Les PME camerounaises gerent leurs affaires sur des carnets papier, Excel ou WhatsApp, causant des pertes financieres, des oublis de paiement et un manque de visibilite.
+### Modules concernes
 
-**Solution :** Un ERP tout-en-un avec Mobile Money integre, relances SMS/WhatsApp, et interface 100% francaise.
-
-**Marche :** 200 000+ PME au Cameroun, 850 000+ en Afrique centrale/occidentale.
-
-**Prix :** 5 000 — 20 000 FCFA/mois.
-
----
-
-## 2. ANALYSE DU MARCHE
-
-### 2.1 Taille du marche
-
-| Pays | PME estimees | Priorite |
-|------|-------------|----------|
-| Cameroun | 200 000+ | 1 |
-| Gabon | 30 000+ | 2 |
-| Congo | 25 000+ | 2 |
-| Cote d'Ivoire | 80 000+ | 3 |
-| Senegal | 60 000+ | 3 |
-| Nigeria | 500 000+ | 4 |
-
-### 2.2 Concurrence
-
-| Concurrent | Forces | Faiblesses vs Koleya |
-|------------|--------|---------------------|
-| Zoho | Maturite, ecosysteme | Pas de Mobile Money, anglais, cher |
-| Odoo | Open source, complet | Complexe, pas adapte au contexte local |
-| FewBox | Local, commandes restaurant | Uniquement restaurants |
-| Excel/carnet | Gratuit, familier | Pas d'automatisation, pas de rapports |
-
-### 2.3 Avantages concurrentiels Koleya
-
-1. **Mobile Money natif** (CinetPay + Flutterwave)
-2. **Relances SMS/WhatsApp** automatiques
-3. **Interface 100% francaise**
-4. **Prix adapte** (5 000 — 20 000 FCFA/mois)
-5. **Support local** (Douala)
-6. **Agent IA** (pas de concurrent)
-7. **Multi-pays** (6 pays des le depart)
+| Module | Types de documents | Priorite |
+|--------|-------------------|----------|
+| Facture | 9 types (facture, fiscale, proforma, recu, recu vente, recu caisse, note credit, bon commande, bon livraison) | 🔴 P0 |
+| Devis | 9 types (forfait, temps, m2, prestations, BTP, commercial, estimatif, descriptif, contrat) | 🔴 P0 |
+| RH | 14 documents (contrat, avenant, attestation, certificat, solde tout compte, fiche de paie, ordre mission, note frais, demande conges, compte-rendu entretien, onboarding, visite medicale, recu materiel, fiche identification) | 🟡 P1 |
+| Client | Module interne enrichi (pas de portail) | 🟡 P1 |
+| Transversal | Recherche/filtres globaux + archivage/historique universels | 🟡 P1 |
 
 ---
 
-## 3. ARCHITECTURE TECHNIQUE
+## PHASE 0 — FIX VERCEL
 
-### 3.1 Vue d'ensemble
+> **Objectif** : corriger l'erreur "Unexpected token '<'" — l'API renvoie du HTML au lieu de JSON.
+> **Duree estimee** : 0.5 j
 
+### Probleme identifie
+
+Le dossier `api/` ne contient que 3 fichiers (login.js, signup.js, clients/index.js) alors que le frontend appelle 15+ routes. Les routes inexistantes sont capturees par le fallback SPA (`index.html`) → erreur JSON.
+
+### Solution
+
+Monter l'application Express complete du backend comme **une seule fonction serverless** dans `api/[[...path]].js`.
+
+### Etapes concretes
+
+**Etape 1 — package.json racine : ajouter les dependances backend**
+
+Ajouter dans `dependencies` :
 ```
-┌─────────────────────────────────────────────────┐
-│                  VERCEL                          │
-│ ┌──────────────┐  ┌──────────────────────────┐ │
-│ │   Frontend    │  │  Serverless Functions    │ │
-│ │  React+Vite   │  │  17 routes API           │ │
-│ │  Tailwind     │  │  JWT Auth                │ │
-│ │  Lazy loading │  │  Failover paiements      │ │
-│ └──────────────┘  └──────────────────────────┘ │
-└────────────────────────┬────────────────────────┘
-                         │
-            ┌────────────┴────────────┐
-            │    Supabase Postgres    │
-            │    25 tables            │
-            │    Multi-tenant (UUID)  │
-            │    Soft delete          │
-            │    Backups auto         │
-            └─────────────────────────┘
+express, cors, helmet, express-rate-limit, dotenv, uuid, zod
+```
+Retirer la dep parasite `"2": "^3.0.0"`.
+
+> Note : bcryptjs, jsonwebtoken, pg sont deja presents.
+
+**Etape 2 — Creer `api/[[...path]].js`**
+
+```javascript
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+
+// Charge l'app Express depuis le backend (CJS)
+const app = require('../backend/src/server.js')
+
+export default function handler(req, res) {
+  app(req, res)
+}
 ```
 
-### 3.2 Stack technique
+Le `require.main === module` dans server.js empeche le `listen()` de se declencher sur Vercel.
 
-| Couche | Technologie | Version |
-|--------|-------------|---------|
-| Frontend | React | 18.2 |
-| Build | Vite | 5.x |
-| Styling | Tailwind CSS | 3.4 |
-| Routing | React Router | 6.x |
-| Graphiques | Recharts | 2.10 |
-| PDF | jsPDF | 2.5 |
-| Icones | lucide-react | 0.294 |
-| Backend | Node.js + Express | 22.x / 4.18 |
-| BDD | PostgreSQL (Supabase) | 14+ |
-| Auth | JWT (bcrypt + jsonwebtoken) | — |
-| Paiements | CinetPay + Flutterwave | — |
-| SMS | Africa's Talking | — |
-| Deploiement | Vercel | — |
-| Domaine | .cm ou .com | — |
+**Etape 3 — Supprimer les fichiers redondants**
 
-### 3.3 Flux de donnees
+- `api/auth/login.js`
+- `api/auth/signup.js`
+- `api/clients/index.js`
+- `api/[...slug].js`
 
-```
-Client → Vente → Stock (sortie) → Facture → Paiement → Notification
-                ↘ Stock (alerte si rupture)
-Fournisseur → Achat → Stock (entree)
-Credit client → Relance SMS/WhatsApp → Paiement
-```
+**Etape 4 — Verifier vercel.json**
 
----
-
-## 4. MODELE DE DONNEES
-
-### 4.1 MCD (Modele Conceptuel)
-
-```
-ENTREPRISE ──1,n── UTILISATEUR
-ENTREPRISE ──1,n── CLIENT
-ENTREPRISE ──1,n── PRODUIT
-ENTREPRISE ──1,n── EMPLOYE
-ENTREPRISE ──1,n── DEPENSE
-ENTREPRISE ──1,n── NOTIFICATION
-CLIENT ──1,n── FACTURE
-CLIENT ──1,n── CREDIT
-CLIENT ──1,n── VENTE
-FACTURE ──1,n── FACTURE_LIGNE
-VENTE ──1,n── VENTE_LIGNE
-ACHAT ──1,n── ACHAT_LIGNE
-CREDIT ──1,n── CREDIT_PAIEMENT
-PRODUIT ──0,n── VENTE_LIGNE
-PRODUIT ──0,n── ACHAT_LIGNE
-PRODUIT ──0,n── MOUVEMENT_STOCK
+```json
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "functions": { "api/**/*.js": { "maxDuration": 10 } }
+}
 ```
 
-### 4.2 MLD (Modele Logique)
+**Etape 5 — Variables d'environnement Vercel**
 
-| Table | Cles | Champs cles |
-|-------|------|-------------|
-| ENTREPRISE | PK id | nom, plan, devise, actif |
-| UTILISATEUR | PK id, FK entreprise | email, mdp, role, est_super_admin |
-| CLIENT | PK id, FK entreprise | nom, telephone, solde |
-| FACTURE | PK id, FK entreprise, FK client | numero, type, statut, total, paye, reste |
-| FACTURE_LIGNE | PK id, FK facture | description, qte, prix, total |
-| VENTE | PK id, FK entreprise, FK client | numero, statut, mt_total, mt_paye, reste |
-| VENTE_LIGNE | PK id, FK vente, FK produit | description, qte, prix, total |
-| ACHAT | PK id, FK entreprise | fournisseur, numero, statut, mt_total |
-| ACHAT_LIGNE | PK id, FK achat, FK produit | description, qte, prix, total |
-| CREDIT | PK id, FK entreprise, FK client | montant_total, reste, statut |
-| CREDIT_PAIEMENT | PK id, FK credit | montant, methode, date |
-| PRODUIT | PK id, FK entreprise | nom, reference, stock, prix_achat, prix_vente |
-| MOUVEMENT_STOCK | PK id, FK entreprise, FK produit | type_mvt, qte, motif |
-| EMPLOYE | PK id, FK entreprise | nom, poste, salaire, statut |
-| DEPENSE | PK id, FK entreprise | categorie, montant, date |
-| NOTIFICATION | PK id, FK entreprise | canal, destinataire, message, statut |
-| DOCUMENT | PK id, FK entreprise | nom_fichier, type, categorie, chemin |
-| SEQUENCE_NUMEROS | PK id, FK entreprise | type, annee, compteur |
-
-### 4.3 MPD (PostgreSQL)
-
-- **25 tables** au total
-- **Cles primaires :** UUID (multi-tenant securise)
-- **Cles etrangeres :** ON DELETE CASCADE
-- **Index :** 35+ sur les colonnes frequentes
-- **Soft delete :** supprime_le + supprime_par sur les tables metier
-- **Audit trail :** cree_le + mis_a_jour_le
-- **Fonction :** generer_numero() pour la numerotation auto
-
-### 4.4 MCV (Vues)
-
-| Vue | Description |
-|-----|-------------|
-| v_factures | Factures + info client |
-| v_credits_en_retard | Credits en retard |
-| v_alertes_stock | Produits sous le seuil min |
-
----
-
-## 5. MODULES FONCTIONNELS
-
-| # | Module | Backend | Frontend | Statut |
-|---|--------|---------|----------|--------|
-| 1 | Authentification | ✅ | ✅ | A ameliorer (2FA, Gmail, reset MDP) |
-| 2 | Facturation | ✅ | ✅ | A ameliorer (clients/entreprises, PDF pro) |
-| 3 | Devis | ✅ | ✅ | OK |
-| 4 | Credits | ✅ | ✅ | OK |
-| 5 | Ventes | ✅ | ❌ | Frontend a creer |
-| 6 | Achats | ✅ | ❌ | Frontend a creer |
-| 7 | Stock | ✅ | ✅ | A ameliorer (photos, QR codes) |
-| 8 | Comptabilite | ⚠️ Partiel | ✅ | Routes double entree manquantes |
-| 9 | RH | ⚠️ Partiel | ✅ | Routes contrats/conges manquantes |
-| 10 | Notifications | ✅ | ✅ | A connecter au vrai SMS |
-| 11 | Paiements | ✅ Service | ❌ | A connecter (CinetPay/Stripe) |
-| 12 | Documents | ❌ | ❌ | A creer completement |
-| 13 | Rapports | ✅ | ✅ | OK |
-| 14 | Portail Client | ✅ | ✅ | OK |
-| 15 | Admin | ✅ | ✅ | OK |
-| 16 | Agent IA | ❌ | ❌ | A creer |
-
----
-
-## 6. CAS D'UTILISATION
-
-### 6.1 Utilisateurs et roles
-
-| Role | Perimetre | Droits |
-|------|-----------|--------|
-| super_admin | Toute la plateforme | CRUD total, restauration, admin panel |
-| proprietaire | Son entreprise | Acces complet |
-| admin | Son entreprise | Presque complet, pas de parametres |
-| comptable | Son entreprise | Facturation, credits, depenses, rapports |
-| employe | Son entreprise | Lecture seule |
-
-### 6.2 Cas d'utilisation principaux (33)
-
-| CU | Description | Priorite |
-|----|-------------|----------|
-| CU-01 | S'inscrire | P0 |
-| CU-02 | Se connecter | P0 |
-| CU-03 | Se connecter par SMS | P0 |
-| CU-04 | Creer une facture | P0 |
-| CU-05 | Enregistrer un paiement | P0 |
-| CU-06 | Generer PDF | P0 |
-| CU-07 | Creer un devis | P0 |
-| CU-08 | Convertir devis→facture | P0 |
-| CU-09 | Enregistrer un credit | P0 |
-| CU-10 | Payer un credit | P0 |
-| CU-11 | Relancer par SMS | P1 |
-| CU-12 | Enregistrer une vente | P0 |
-| CU-13 | Payer une vente | P0 |
-| CU-14 | Enregistrer un achat | P0 |
-| CU-15 | Ajouter un produit | P0 |
-| CU-16 | Ajuster le stock | P0 |
-| CU-17 | Consulter alertes stock | P0 |
-| CU-18 | Enregistrer une depense | P1 |
-| CU-19 | Consulter bilan | P1 |
-| CU-20 | Ajouter un employe | P1 |
-| CU-21 | Generer fiche de paie | P1 |
-| CU-22 | Envoyer SMS/WhatsApp | P1 |
-| CU-23 | Relances automatiques | P1 |
-| CU-24 | Paiement Mobile Money | P1 |
-| CU-25 | Gerer entreprises (admin) | P1 |
-| CU-26 | Restaurer elements | P1 |
-| CU-27 | Creer utilisateurs (admin) | P1 |
-| CU-28 | Consulter factures (client) | P2 |
-| CU-29 | Payer facture (client) | P2 |
-| CU-30 | Bilan financier | P2 |
-| CU-31 | Aging clients | P2 |
-| CU-32 | Top clients | P2 |
-| CU-33 | Agent IA | P2 |
-
----
-
-## 7. ETAT ACTUEL DU PROJET
-
-### 7.1 Fichiers
-
-| Repertoire | Fichiers | Statut |
-|------------|----------|--------|
-| backend/src/routes/ | 17 fichiers | ✅ Complets |
-| backend/src/services/ | 2 fichiers | ✅ OK |
-| backend/src/middleware/ | 3 fichiers | ✅ OK |
-| backend/migrations/ | 12 fichiers SQL | ⚠️ A nettoyer |
-| src/components/ | 18 modules | ✅ Complets |
-| src/contexts/ | 4 fichiers | ✅ OK |
-| src/utils/ | 1 fichier (api.js) | ✅ OK |
-| **Total** | **~60 fichiers** | |
-
-### 7.2 Ce qui fonctionne
-
-| Module | Fonctionnel | Commentaire |
-|--------|:-----------:|-------------|
-| Auth (email/MDP/SMS) | ✅ | JWT + refresh tokens |
-| Facturation + Devis | ✅ | PDF avec logo/cachet |
-| Credits clients | ✅ | Paiements partiels |
-| Stock basique | ✅ | CRUD + alertes |
-| Ventes/Achats | ✅ | Backend complet |
-| Notifications | ⚠️ | Simulation en dev |
-| Admin | ✅ | CRUD + restauration |
-| Rapports | ✅ | Graphiques + export |
-| Portail Client | ✅ | Consultation + paiement |
-
-### 7.3 Ce qui ne fonctionne pas encore
-
-| Probleme | Impact |
+| Variable | Valeur |
 |----------|--------|
-| Frontend non connecte au backend | Donnees en localStorage uniquement |
-| Pas de vrai SMS/WhatsApp | Notifications simulees |
-| Paiements non connectes | CinetPay/Stripe pas configures |
-| Pas de tests | Risque de regressions |
-| Pas de deploiement | App pas accessible en ligne |
+| `DATABASE_URL` | `postgresql://postgres.etkguxaroezjywrujfom:Koleya2026%21@aws-1-eu-west-1.pooler.supabase.com:6543/postgres` |
+| `JWT_SECRET` | (secret defini en local) |
+| `CORS_ORIGIN` | `https://koleya-erp.vercel.app` |
+| `NODE_ENV` | `production` |
+
+### Tests de validation
+
+| Test | Resultat attendu |
+|------|-----------------|
+| `GET /api/health` | `{"status":"ok"}` |
+| `POST /api/auth/login` | JSON (pas de HTML) |
+| `GET /api/clients` (avec token) | JSON avec tableau de clients |
+| `POST /api/factures` (avec token) | JSON avec facture creee |
 
 ---
 
-## 8. NOUVELLES FONCTIONNALITES DEMANDEES
+## PHASE 1 — MODULE FACTURE
 
-| # | Fonctionnalite | Module | Effort | Priorite |
-|---|---------------|--------|--------|----------|
-| 1 | Paiements bancaires (Stripe) | Paiements | 2j | P0 |
-| 2 | Paiement par preuves (upload recu) | Paiements | 1j | P0 |
-| 3 | 2FA (double facteur SMS) | Auth | 2j | P0 |
-| 4 | Inscription via Gmail (OAuth2) | Auth | 1j | P1 |
-| 5 | Reset MDP par email + confirm SMS | Auth | 2j | P0 |
-| 6 | Factures clients vs entreprises | Facturation | 1j | P1 |
-| 7 | Factures achat (frontend) | Achats | 1j | P0 |
-| 8 | Photos de produits | Stock | 1j | P1 |
-| 9 | QR Codes produits | Stock | 1j | P1 |
-| 10 | Mise en forme PDF professionnelle | PDF | 2j | P1 |
-| 11 | Module Documents complet | Documents | 1j | P1 |
+> **Objectif** : formulaire unifie pour les 9 types de documents facture + selecteur template + tracabilite.
+> **Duree estimee** : 3-4 j
+
+### 1.0 NUMEROTATION AUTOMATIQUE DES DOCUMENTS (PREREQUIS)
+
+> Chaque type de document a sa **propre sequence** (prefixe + compteur annuel), garantissant
+> un numero unique non duplicable. Format : `{PREFIXE}-{ANNEE}-{SEQ}` ex: `FAC-2026-001`.
+
+#### Prefixes par type (defauts Cameroun)
+
+| Type de document | Colonne `entreprises` | Defaut | Exemple |
+|------------------|----------------------|--------|---------|
+| facture | `prefixe_facture` | `FAC` | FAC-2026-001 |
+| facture_fiscale | `prefixe_facture_fiscale` | `FIS` | FIS-2026-001 |
+| facture_proforma | `prefixe_facture_proforma` | `PRO` | PRO-2026-001 |
+| recu | `prefixe_recu` | `REC` | REC-2026-001 |
+| recu_vente | `prefixe_recu_vente` | `REV` | REV-2026-001 |
+| recu_caisse | `prefixe_recu_caisse` | `RCA` | RCA-2026-001 |
+| note_credit | `prefixe_note_credit` | `NDC` | NDC-2026-001 |
+| bon_commande | `prefixe_bon_commande` | `BCM` | BCM-2026-001 |
+| bon_livraison | `prefixe_bon_livraison` | `BLV` | BLV-2026-001 |
+| devis | `prefixe_devis` | `DEV` | DEV-2026-001 |
+
+#### Migration `015_numerotation.sql`
+
+```sql
+-- 1. Ajouter les colonnes prefixe a la table entreprises
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_facture_fiscale VARCHAR(10) DEFAULT 'FIS';
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_facture_proforma VARCHAR(10) DEFAULT 'PRO';
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_recu VARCHAR(10) DEFAULT 'REC';
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_recu_vente VARCHAR(10) DEFAULT 'REV';
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_recu_caisse VARCHAR(10) DEFAULT 'RCA';
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_note_credit VARCHAR(10) DEFAULT 'NDC';
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_bon_commande VARCHAR(10) DEFAULT 'BCM';
+ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS prefixe_bon_livraison VARCHAR(10) DEFAULT 'BLV';
+
+-- 2. Fonction generer_numero etendue (mappe chaque type -> son prefixe)
+CREATE OR REPLACE FUNCTION generer_numero(p_entreprise_id UUID, p_type VARCHAR(20))
+RETURNS VARCHAR(50) AS $$
+DECLARE
+  v_prefixe VARCHAR(10);
+  v_annee INTEGER;
+  v_compteur INTEGER;
+BEGIN
+  v_annee := EXTRACT(YEAR FROM NOW())::INTEGER;
+
+  -- Mapping type -> colonne prefixe
+  SELECT CASE p_type
+    WHEN 'facture' THEN COALESCE(prefixe_facture, 'FAC')
+    WHEN 'facture_fiscale' THEN COALESCE(prefixe_facture_fiscale, 'FIS')
+    WHEN 'facture_proforma' THEN COALESCE(prefixe_facture_proforma, 'PRO')
+    WHEN 'recu' THEN COALESCE(prefixe_recu, 'REC')
+    WHEN 'recu_vente' THEN COALESCE(prefixe_recu_vente, 'REV')
+    WHEN 'recu_caisse' THEN COALESCE(prefixe_recu_caisse, 'RCA')
+    WHEN 'note_credit' THEN COALESCE(prefixe_note_credit, 'NDC')
+    WHEN 'bon_commande' THEN COALESCE(prefixe_bon_commande, 'BCM')
+    WHEN 'bon_livraison' THEN COALESCE(prefixe_bon_livraison, 'BLV')
+    WHEN 'devis' THEN COALESCE(prefixe_devis, 'DEV')
+    ELSE COALESCE(prefixe_facture, 'FAC')
+  END INTO v_prefixe
+  FROM entreprises WHERE id = p_entreprise_id;
+
+  -- Increment atomique du compteur (sequence_numeros a UNIQUE(entreprise_id, type, annee))
+  INSERT INTO sequence_numeros (entreprise_id, type, annee, compteur)
+  VALUES (p_entreprise_id, p_type, v_annee, 1)
+  ON CONFLICT (entreprise_id, type, annee)
+  DO UPDATE SET compteur = sequence_numeros.compteur + 1
+  RETURNING compteur INTO v_compteur;
+
+  RETURN v_prefixe || '-' || v_annee || '-' || LPAD(v_compteur::TEXT, 3, '0');
+END; $$ LANGUAGE plpgsql;
+```
+
+#### Backend — `routes/factures.js` (POST)
+
+Le numero est genere cote serveur (atomicite via `sequence_numeros`) :
+
+```javascript
+const numeroResult = await client.query(
+  'SELECT generer_numero($1, $2) AS numero',
+  [req.entrepriseId, type || 'facture']
+)
+const numero = numeroResult.rows[0].numero
+```
+
+=> Le frontend n'envoie **jamais** de numero ; il affiche `generer_numero()` cote UI uniquement pour l'apercu,
+et le backend le regenere a l'insertion (source de verite unique).
+
+#### Particularite : Recu de caisse
+
+Le recu de casse a un numero propre (`RCA-2026-001`) via sa propre sequence `type = 'recu_caisse'`.
+Pas de dependance a une facture cliente.
+
+### 1.1 Migration SQL (`013_devis.sql`)
+
+Commune avec Phase 2 (Devis).
+
+```sql
+-- Colonnes TVA/remise sur les lignes
+ALTER TABLE facture_lignes ADD COLUMN IF NOT EXISTS taux_tva DECIMAL(5,2) DEFAULT 0;
+ALTER TABLE facture_lignes ADD COLUMN IF NOT EXISTS remise_pct DECIMAL(5,2) DEFAULT 0;
+ALTER TABLE facture_lignes ADD COLUMN IF NOT EXISTS montant_ht DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE facture_lignes ADD COLUMN IF NOT EXISTS montant_ttc DECIMAL(15,2) DEFAULT 0;
+
+-- Colonnes totaux/ remise sur la facture
+ALTER TABLE factures ADD COLUMN IF NOT EXISTS remise_globale DECIMAL(5,2) DEFAULT 0;
+ALTER TABLE factures ADD COLUMN IF NOT EXISTS total_ht DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE factures ADD COLUMN IF NOT EXISTS total_ttc DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE factures ADD COLUMN IF NOT EXISTS devise VARCHAR(10) DEFAULT 'FCFA';
+```
+
+### 1.2 Backend — `routes/factures.js`
+
+Modifications apportees :
+
+| Action | Detail |
+|--------|--------|
+| `POST /api/factures` | Accepter les 9 valeurs de `type` (pas seulement "facture"/"devis") |
+| Calcul cote serveur | Cascade HT → remise → TVA → TTC avant insertion |
+| Enregistrer | `total_ht`, `total_ttc`, `devise`, `template_style` |
+| `GET /api/factures` | Retourner les nouvelles colonnes |
+| `PUT /api/factures/:id` | Accepter les nouvelles colonnes |
+
+### 1.3 Frontend — `src/components/Facturation/NouvelleFacture.jsx`
+
+Modifications du formulaire existant :
+
+| Element | Modification |
+|---------|-------------|
+| Selecteur de type | Dropdown avec les 9 types (pas juste Facture/Devis) |
+| Titre dynamique | "Nouvelle Facture", "Nouveau Recu de Vente", "Nouveau Bon de Commande", etc. |
+| Libelle "Facture a" | Dynamique selon type : "Facture a", "Vendu a", "Livre a", "Client", "Vendeur", etc. |
+| Mode Simple/Avance | Toggle qui affiche/masque : Qté, Prix Unit., Echeance, Envoye a |
+| Recu de casse | Pas de tableau, champs simples : Recu par, Recu de, Pour, Montant, Methode |
+| Selecteur template | Modal avant generation : 6 styles visuels (classique-bleu, classique-blanc, moderne-rouge, mono-noir, orange-militaire, bande-bleu) |
+| Selecteur devise | Dropdown : FCFA, EUR, USD, GBP, XOF, etc. |
+| Calculs en direct | Sous-total HT, taxes, total TTC visibles pendant la saisie |
+| Validation | Les champs obligatoires changent selon le type |
+
+### 1.4 Templates — `src/templates/templateEngine.js`
+
+| Modification | Detail |
+|-------------|--------|
+| Mode avance | Afficher colonnes Qté, Prix Unit., Echeance, Envoye a |
+| `recu_caisse` | Pas de tableau, rendu en texte avec champs simples |
+| Devise | `total` + `FCFA` parametrable selon la devise choisie |
+| Type-specific fields | `bon_commande` : "Vendeur", `bon_livraison` : "Livre a", etc. |
+
+### 1.5 Traçabilite
+
+- Enregistrer `template_style` et `devise` sur chaque facture
+- Onglet "Historique" dans la fiche facture (timeline des statuts)
 
 ---
 
-## 9. PLAN DE TRAVAIL
+## PHASE 2 — MODULE DEVIS
 
-### Sprint 1 : Authentification renforcee (3 jours)
+> **Objectif** : 9 types de devis avec modes de calcul, workflow statuts, conversion en facture.
+> **Duree estimee** : 3-4 j
 
-| # | Tache | Effort | Depend de |
-|---|-------|--------|-----------|
-| 1.1 | Inscription via Gmail (OAuth2 Google) | 1j | — |
-| 1.2 | 2FA (code SMS apres connexion) | 1j | — |
-| 1.3 | Reset MDP par email + confirmation SMS | 1j | — |
+### 2.1 Migration SQL (ajout a `013_devis.sql`)
 
-**Livrables :**
-- Connexion Gmail fonctionnelle
-- 2FA active sur tous les comptes
-- Reset MDP via lien email + code SMS
+```sql
+-- Table des metadonnees devis
+CREATE TABLE IF NOT EXISTS devis_meta (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    devis_id UUID NOT NULL REFERENCES factures(id) ON DELETE CASCADE,
+    type_devis VARCHAR(30) NOT NULL,
+    mode_calcul VARCHAR(30),
+    surface DECIMAL(15,2),
+    taux DECIMAL(15,2),
+    duree INTEGER,
+    nb_intervenants INTEGER,
+    mention VARCHAR(50),
+    validite_jours INTEGER DEFAULT 30,
+    cree_le TIMESTAMP DEFAULT NOW()
+);
+```
 
-### Sprint 2 : Paiements (3 jours)
+### 2.2 Generer numero — prefixe DEV
 
-| # | Tache | Effort | Depend de |
-|---|-------|--------|-----------|
-| 2.1 | Paiements bancaires (Stripe Checkout) | 1j | — |
-| 2.2 | Paiement par preuves (upload recu) | 1j | — |
-| 2.3 | Frontend Module Ventes | 1j | — |
+```sql
+-- Modifier la fonction pour prefixe_defaut 'DEV'
+CREATE OR REPLACE FUNCTION generer_numero(p_entreprise_id UUID, p_type VARCHAR(20))
+RETURNS VARCHAR(50) AS $$
+DECLARE v_prefixe VARCHAR(10); v_annee INTEGER; v_compteur INTEGER;
+BEGIN
+  v_annee := EXTRACT(YEAR FROM NOW())::INTEGER;
+  IF p_type = 'devis' THEN
+    SELECT COALESCE(prefixe_devis, 'DEV') INTO v_prefixe FROM entreprises WHERE id = p_entreprise_id;
+  ELSE
+    SELECT COALESCE(prefixe_facture, 'FAC') INTO v_prefixe FROM entreprises WHERE id = p_entreprise_id;
+  END IF;
+  INSERT INTO sequence_numeros (entreprise_id, type, annee, compteur)
+  VALUES (p_entreprise_id, p_type, v_annee, 1)
+  ON CONFLICT (entreprise_id, type, annee)
+  DO UPDATE SET compteur = sequence_numeros.compteur + 1
+  RETURNING compteur INTO v_compteur;
+  RETURN v_prefixe || '-' || v_annee || '-' || LPAD(v_compteur::TEXT, 3, '0');
+END; $$ LANGUAGE plpgsql;
+```
 
-**Livrables :**
-- Paiement par carte bancaire via Stripe
-- Upload de preuve de paiement (photo du recu)
-- Page Ventes fonctionnelle
+### 2.3 Backend — nouvelles routes
 
-### Sprint 3 : Documents + Stock (3 jours)
+| Route | Methode | Role |
+|-------|---------|------|
+| `POST /api/factures` | POST | Creer devis avec `type = 'devis'` + `devis_meta` |
+| `PUT /api/factures/:id/statut` | PUT | Workflow : brouillon → envoye → accepte / refuse |
+| `POST /api/devis/:id/convertir` | POST | Creer une facture identique, statut `en_attente` |
+| `GET /api/factures?type=devis` | GET | Lister les devis avec meta |
 
-| # | Tache | Effort | Depend de |
-|---|-------|--------|-----------|
-| 3.1 | Module Documents (migration + backend + frontend) | 1j | — |
-| 3.2 | Photos de produits (upload + gallery) | 1j | — |
-| 3.3 | QR Codes produits (generation + affichage) | 1j | — |
+### 2.4 Calcul en cascade (cote serveur)
 
-**Livrables :**
-- Upload et listing de documents
-- Photos de produits dans la fiche produit
-- QR codes generes automatiquement
+```
+1. Total HT ligne = Quantite × Prix unit HT
+2. Sous-total HT = Σ lignes
+3. HT net remise = Sous-total × (1 - remise_globale/100)
+4. TVA ligne = Total HT ligne × taux_tva/100
+5. Total TTC = HT net remise + Σ TVA
+```
 
-### Sprint 4 : Facturation avancee + PDF pro (3 jours)
+### 2.5 Frontend — `src/components/Devis/NouveauDevis.jsx` (NOUVEAU)
 
-| # | Tache | Effort | Depend de |
-|---|-------|--------|-----------|
-| 4.1 | Factures clients vs entreprises | 1j | — |
-| 4.2 | Factures achat (frontend) | 1j | — |
-| 4.3 | Mise en forme PDF professionnelle | 1j | — |
-
-**Livrables :**
-- Distinction facture client / facture entreprise
-- Page Achats fonctionnelle
-- PDF avec en-tete soigne, pied de page, mentions legales
-
-### Sprint 5 : Tests + Deploiement (3 jours)
-
-| # | Tache | Effort | Depend de |
-|---|-------|--------|-----------|
-| 5.1 | Tests de tous les modules | 1j | Sprints 1-4 |
-| 5.2 | Deploiement Vercel + Supabase | 1j | — |
-| 5.3 | Configuration paiements (CinetPay/Stripe) | 1j | — |
-
-**Livrables :**
-- Application en ligne sur koleya.cm
-- Paiements fonctionnels
-- Tests passes
-
-**Total : 15 jours (3 semaines)**
+| Element | Detail |
+|---------|--------|
+| Selecteur type | 9 types → mode de calcul adapte |
+| Forfait | Ligne unique "Montant global du projet" |
+| Temps passe | Taux (horaire/journalier) + duree + nb intervenants |
+| Metre carre | Surface (m2) + prix/m2 + type travaux |
+| Prestations | Tableau (service, duree, livrables, tarif) |
+| Travaux BTP | Tableau (materiau, qte, unite, prix) + main-d'oeuvre + securite |
+| Commercial | Tableau (produit, qte, prix, remise %) + frais port |
+| Estimatif | Mention "Devis estimatif non contractuel" sur le PDF |
+| Descriptif | Champ libre description technique + mention |
+| Devis-contrat | Mention "Bon pour accord" + zone signature double |
+| Calculs en direct | HT → Sous-total → Remise → TVA → TTC |
+| Workflow | Boutons statuts (Brouillon, Envoyer, Accepter, Refuser) |
+| Convertir | "Convertir en facture" sur les devis acceptes |
+| Template + devise | Identique a Phase 1 |
 
 ---
 
-## 10. ANALYSE DES RISQUES
+## PHASE 3 — MODULE RH
 
-| Risque | Probabilite | Impact | Mitigation |
-|--------|:-----------:|:------:|------------|
-| Faille de securite | Moyen | Critique | Validation, HTTPS, JWT, rate limiting |
-| Perte de donnees | Faible | Critique | Backup Supabase + export JSON |
-| Faible adoption | Eleve | Critique | Beta test + formation + support local |
-| Concurrent entre | Eleve | Moyen | Se differencier par le local |
-| Indisponibilite BDD | Faible | Eleve | Supabase = 99.9% SLA |
-| Depassement budget | Moyen | Eleve | MVP d'abord, features ensuite |
-| Notifications non delivrees | Moyen | Moyen | Fallback email + retry |
+> **Objectif** : fiche employe complete + 14 documents RH generables avec calculs CNPS/IRPP.
+> **Duree estimee** : 5-7 j
 
----
+### 3.1 Migration SQL (`014_rh_profil.sql`)
 
-## 11. PROJECTIONS FINANCIERES
+#### Enrichir la table `employes` (~20 colonnes)
 
-### 11.1 Investissements
+```sql
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS matricule VARCHAR(50);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS civilite VARCHAR(10);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS prenom VARCHAR(100);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS nom_usage VARCHAR(255);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS date_naissance DATE;
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS lieu_naissance VARCHAR(255);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS nationalite VARCHAR(100);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS adresse TEXT;
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS num_secu VARCHAR(50);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS situation_familiale VARCHAR(50);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS nb_enfants INTEGER DEFAULT 0;
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS iban VARCHAR(50);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS bic VARCHAR(20);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS contact_urgence VARCHAR(255);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS lien_parente VARCHAR(50);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS tel_urgence VARCHAR(50);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS manager_n1 VARCHAR(255);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS site_travail VARCHAR(255);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS email_pro VARCHAR(255);
+ALTER TABLE employes ADD COLUMN IF NOT EXISTS telephone_pro VARCHAR(50);
+```
 
-| Poste | Cout |
-|-------|------|
-| Developpement (6 semaines) | 8 000 000 FCFA |
-| Infrastructure (an 1) | 600 000 FCFA |
-| Domaine | 15 000 FCFA/an |
-| Marketing (lancement) | 1 000 000 FCFA |
-| **Total** | **~10 000 000 FCFA** |
+#### Tables des documents RH
 
-### 11.2 Revenus projetes
+```sql
+-- Documents RH generes (contrat, attestation, certificat, etc.)
+CREATE TABLE IF NOT EXISTS rh_documents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entreprise_id UUID NOT NULL REFERENCES entreprises(id) ON DELETE CASCADE,
+    employe_id UUID NOT NULL REFERENCES employes(id) ON DELETE CASCADE,
+    type_document VARCHAR(50) NOT NULL,
+    titre TEXT,
+    variables JSONB,
+    pdf_url TEXT,
+    statut VARCHAR(20) DEFAULT 'brouillon',
+    cree_par UUID, cree_le TIMESTAMP DEFAULT NOW(),
+    supprime_le TIMESTAMP
+);
 
-| Mois | Clients | MRR (FCFA) | Cumul |
-|------|---------|-----------|-------|
-| M3 | 20 | 150 000 | 450 000 |
-| M6 | 80 | 600 000 | 2 250 000 |
-| M9 | 150 | 1 125 000 | 5 625 000 |
-| M12 | 250 | 1 875 000 | 14 062 500 |
+-- Ordres de mission
+CREATE TABLE IF NOT EXISTS missions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entreprise_id UUID NOT NULL REFERENCES entreprises(id) ON DELETE CASCADE,
+    employe_id UUID NOT NULL REFERENCES employes(id) ON DELETE CASCADE,
+    objet TEXT,
+    destination TEXT,
+    date_debut DATE,
+    date_fin DATE,
+    motif TEXT,
+    moyen_transport VARCHAR(100),
+    statut VARCHAR(20) DEFAULT 'brouillon',
+    approuve_par UUID,
+    cree_le TIMESTAMP DEFAULT NOW()
+);
 
-### 11.3 Couts mensuels
+-- Notes de frais
+CREATE TABLE IF NOT EXISTS notes_frais (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entreprise_id UUID NOT NULL REFERENCES entreprises(id) ON DELETE CASCADE,
+    employe_id UUID NOT NULL REFERENCES employes(id) ON DELETE CASCADE,
+    date_soumission DATE DEFAULT CURRENT_DATE,
+    statut VARCHAR(20) DEFAULT 'en_attente',
+    total DECIMAL(15,2) DEFAULT 0,
+    approuve_par UUID,
+    cree_le TIMESTAMP DEFAULT NOW()
+);
 
-| Service | Cout |
+CREATE TABLE IF NOT EXISTS notes_frais_lignes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    note_frais_id UUID NOT NULL REFERENCES notes_frais(id) ON DELETE CASCADE,
+    date_frais DATE,
+    categorie VARCHAR(100),
+    description TEXT,
+    montant DECIMAL(15,2) NOT NULL,
+    cree_le TIMESTAMP DEFAULT NOW()
+);
+
+-- Visites medicales
+CREATE TABLE IF NOT EXISTS visites_medicales (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entreprise_id UUID NOT NULL REFERENCES entreprises(id) ON DELETE CASCADE,
+    employe_id UUID NOT NULL REFERENCES employes(id) ON DELETE CASCADE,
+    date_visite DATE,
+    centre_medical VARCHAR(255),
+    medecin VARCHAR(255),
+    aptitude VARCHAR(50),
+    restrictions TEXT,
+    prochaine_visite DATE,
+    cree_le TIMESTAMP DEFAULT NOW()
+);
+
+-- Materiel mis a disposition
+CREATE TABLE IF NOT EXISTS materiel_employe (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entreprise_id UUID NOT NULL REFERENCES entreprises(id) ON DELETE CASCADE,
+    employe_id UUID NOT NULL REFERENCES employes(id) ON DELETE CASCADE,
+    date_mise_a_disposition DATE DEFAULT CURRENT_DATE,
+    statut VARCHAR(20) DEFAULT 'actif',
+    cree_le TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS materiel_employe_lignes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    materiel_id UUID NOT NULL REFERENCES materiel_employe(id) ON DELETE CASCADE,
+    type_materiel VARCHAR(100),
+    marque VARCHAR(100),
+    numero_serie VARCHAR(100),
+    description TEXT,
+    cree_le TIMESTAMP DEFAULT NOW()
+);
+```
+
+### 3.2 Backend — `routes/rh.js` (NOUVEAU)
+
+| Route | Methode | Role |
+|-------|---------|------|
+| `GET/POST /api/employes` | GET/POST | CRUD employes (enrichi) |
+| `PUT /api/employes/:id` | PUT | Modifier employe (20+ champs) |
+| `GET/POST /api/rh/documents` | GET/POST | CRUD documents RH |
+| `POST /api/rh/documents/:id/generer` | POST | Generer le PDF d'un document |
+| `GET/POST /api/rh/missions` | GET/POST | CRUD ordres de mission |
+| `GET/POST /api/rh/notes-frais` | GET/POST | CRUD notes de frais |
+| `GET/POST /api/rh/visites` | GET/POST | CRUD visites medicales |
+| `GET/POST /api/rh/materiel` | GET/POST | CRUD materiel |
+| `GET/POST /api/rh/historique-paie` | GET/POST | Historique bulletins |
+
+### 3.3 Calculs RH
+
+```
+CNPS salariale = salaire × 4.2%
+CNPS patronale = salaire × 8.65%
+IRPP (Cameroun) = si salaire > 200 000 FCFA → (salaire - 200 000) × 10%
+CAC = salaire × 2.5%
+Salaire net = salaire - CNPS - IRPP - CAC
+```
+
+### 3.4 Frontend — 14 composants + generateur
+
+| Composant | Champs specifiques |
+|-----------|-------------------|
+| `FicheIdentification.jsx` | Etat civil + admin (secu, IBAN) + contact urgence + situation pro |
+| `ContratTravail.jsx` | CDI/CDD, salaire, poste, date debut, heures, statut cadre |
+| `AvenantContrat.jsx` | Contrat parent, modification, date effet |
+| `AttestationTravail.jsx` | Nom, date debut, poste, ville, date du jour |
+| `CertificatTravail.jsx` | Dates entree/sortie, postes occupes, libre de tout engagement |
+| `SoldeToutCompte.jsx` | Salaire prorata, indemnites conges, indemnite rupture, total |
+| `BulletinPaie.jsx` | Salaire base + primes - cotisations - impot = NET |
+| `OrdreMission.jsx` | Lieu, periode, objet, transport |
+| `NoteFrais.jsx` | Liste lignes (date, categorie, description, montant) |
+| `DemandeConge.jsx` | Type, dates, nb jours, solde avant/apres, approbation |
+| `EntretienAnnuel.jsx` | Bilan, objectifs, formations, commentaires |
+| `FicheOnboarding.jsx` | Identite + coordonnees + urgence + secu + IBAN |
+| `VisiteMedicale.jsx` | Date, centre, aptitude, restrictions, prochaine visite |
+| `RecuMateriel.jsx` | Liste articles (type, marque, numero serie) |
+
+### 3.5 Generateurs PDF
+
+| Fichier | Role |
 |---------|------|
-| Vercel (frontend + API) | 0 FCFA |
-| Supabase (BDD) | 0 FCFA (500 Mo gratuit) |
-| Domaine | ~1 250 FCFA/mois |
-| CinetPay | ~2% par transaction |
-| **Total fixe** | **~1 250 FCFA/mois** |
+| `pdfGeneratorRH.js` | Generateur commun — 14 templates avec variables `{...}` |
+| Integre dans chaque composant | Mode apercu + telechargement PDF |
+
+Chaque template suit exactement la structure fournie par l'utilisateur (contrat, avenant, attestation, etc.) avec les variables `{nom_entreprise}`, `{salaire_brut}`, etc. remplacees automatiquement.
+
+### 3.6 Intégration RH.jsx
+
+- Onglet **"Documents RH"** : acces rapide aux 14 types de documents
+- Enrichir le formulaire employe avec les 20+ champs
+- Historique de paie dans l'onglet "Fiches de paie"
 
 ---
 
-## 12. STACK TECHNIQUE DETAILLEE
+## PHASE 4 — RECHERCHE/FILTRES + ARCHIVAGE/HISTORIQUE
 
-### Frontend
+> **Objectif** : composant recherche global + tracabilite universelle.
+> **Duree estimee** : 3-4 j
 
-| Technologie | Version | Role |
-|-------------|---------|------|
-| React | 18.2 | UI Library |
-| Vite | 5.x | Build tool |
-| Tailwind CSS | 3.4 | Styling |
-| React Router | 6.x | Routing |
-| Recharts | 2.10 | Graphiques |
-| jsPDF | 2.5 | PDF client |
-| lucide-react | 0.294 | Icones |
+### 4.1 Migration SQL (`016_archivage.sql`)
 
-### Backend
+```sql
+-- Archives de tous les documents generes
+CREATE TABLE IF NOT EXISTS documents_archives (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entreprise_id UUID NOT NULL REFERENCES entreprises(id) ON DELETE CASCADE,
+    module VARCHAR(20) NOT NULL,
+    document_id UUID NOT NULL,
+    type_document VARCHAR(50),
+    numero VARCHAR(50),
+    pdf_url TEXT,
+    variables JSONB,
+    empreinte VARCHAR(64),
+    cree_par UUID,
+    cree_le TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_archives_entreprise ON documents_archives(entreprise_id);
+CREATE INDEX idx_archives_module ON documents_archives(module);
 
-| Technologie | Version | Role |
-|-------------|---------|------|
-| Node.js | 22.x | Runtime |
-| Express | 4.18 | Framework HTTP |
-| pg | 8.11 | Client PostgreSQL |
-| bcryptjs | 2.4 | Hashing MDP |
-| jsonwebtoken | 9.0 | Auth JWT |
-| helmet | 7.1 | Securite HTTP |
+-- Historique des changements de statut
+CREATE TABLE IF NOT EXISTS document_historique (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entreprise_id UUID NOT NULL REFERENCES entreprises(id) ON DELETE CASCADE,
+    module VARCHAR(20) NOT NULL,
+    document_id UUID NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    statut_avant VARCHAR(50) DEFAULT '',
+    statut_apres VARCHAR(50),
+    utilisateur_id UUID,
+    details TEXT,
+    date TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_historique_module ON document_historique(module, document_id);
+```
 
-### Base de donnees
+### 4.2 Backend
 
-| Technologie | Role |
-|-------------|------|
-| Supabase (PostgreSQL 14+) | BDD + backups auto + SSL |
-| UUID | Cles primaires (multi-tenant) |
-| JSONB | Donnees flexibles |
-| Soft delete | Audit trail |
+| Endpoint | Role |
+|----------|------|
+| `GET /api/search?q=&module=&statut=&page=&limit=` | Recherche cote SQL (ILIKE) |
+| Archiver | Appeler a chaque creation de document valide → inserer dans `documents_archives` + generer hash SHA256 |
+| Historique | Appeler a chaque changement de statut → inserer dans `document_historique` |
+| `GET /api/archives?module=` | Lister les archives |
+| `GET /api/historique?module=&document_id=` | Recuperer l'historique |
 
-### Infrastructure
+### 4.3 Frontend — `src/components/shared/`
 
-| Composant | Solution | Cout |
-|-----------|----------|------|
-| Frontend + Backend | Vercel | Gratuit |
-| BDD | Supabase | Gratuit (500 Mo) |
-| Domaine | .cm | ~15 000 FCFA/an |
-| Paiements | CinetPay + Stripe | ~2-3% par transaction |
-| SMS | Africa's Talking | ~50 FCFA/SMS |
+| Composant | Detail |
+|-----------|--------|
+| `RechercheFiltre.jsx` | Barre recherche texte + filtres contextuels par module + tri colonnes + pagination |
+| `useRecherche.js` | Hook (debounce 300ms, tri, pagination, persistance session) |
+| `TimelineHistorique.jsx` | Timeline visuelle des statuts (timeline-stepper) |
+| `ListeArchives.jsx` | Liste des PDF archives avec bouton telecharger + badge empreinte |
+
+Filtres contextuels par module :
+- Facture/Devis → statut, type, client, date debut/fin, montant min/max
+- RH → type document, employe, statut
+- Clients → ville, pays, solde > 0
 
 ---
 
-## 13. CONTACT
+## PHASE 5 — PORTAIL CLIENT (OPTIONNEL — REPORTE)
 
-| Role | Nom | Email |
-|------|-----|-------|
-| CEO & Fondateur | Georges Edimo | georgese66@gmail.com |
-| Support | Koleya | support@koleya.cm |
-| Technique | Dev Team | dev@koleya.cm |
+> **Statut** : non construit au MVP.
+> Les donnees (clients, factures, paiements) sont deja exposees par l'API existante. Le portail sera un consommateur de cette API, pas une refonte.
+> A declencher quand le socle (Phases0-4) sera valide et que >30-50 clients seront actifs.
 
 ---
 
-**Ce document est vivant et sera mis a jour a chaque sprint.**
+## MIGRATIONS
+
+| Fichier | Contenu | Phase |
+|---------|---------|-------|
+| `013_devis.sql` | TVA/remise lignes + totaux + devis_meta | 1 + 2 |
+| `015_numerotation.sql` | Colonnes prefixe entreprises + fonction `generer_numero` etendue (10 types) | 1 + 2 |
+| `014_rh_profil.sql` | ~20 colonnes employes + tables rh_documents, missions, notes_frais, visites_medicales, materiel_employe | 3 |
+| `016_archivage.sql` | documents_archives + document_historique | 4 |
+
+---
+
+## LISTE COMPLETE DES FICHIERSA CREER OU MODIFIER
+
+### Nouveaux fichiers a creer
+
+| Fichier | Phase |
+|---------|-------|
+| `api/[[...path]].js` | 0 |
+| `migrations/013_devis.sql` | 1+2 |
+| `migrations/015_numerotation.sql` | 1+2 |
+| `migrations/014_rh_profil.sql` | 3 |
+| `migrations/016_archivage.sql` | 4 |
+| `src/components/Devis/NouveauDevis.jsx` | 2 |
+| `src/components/RH/FicheIdentification.jsx` | 3 |
+| `src/components/RH/ContratTravail.jsx` | 3 |
+| `src/components/RH/AvenantContrat.jsx` | 3 |
+| `src/components/RH/AttestationTravail.jsx` | 3 |
+| `src/components/RH/CertificatTravail.jsx` | 3 |
+| `src/components/RH/SoldeToutCompte.jsx` | 3 |
+| `src/components/RH/BulletinPaie.jsx` | 3 |
+| `src/components/RH/OrdreMission.jsx` | 3 |
+| `src/components/RH/NoteFrais.jsx` | 3 |
+| `src/components/RH/DemandeConge.jsx` | 3 |
+| `src/components/RH/EntretienAnnuel.jsx` | 3 |
+| `src/components/RH/FicheOnboarding.jsx` | 3 |
+| `src/components/RH/VisiteMedicale.jsx` | 3 |
+| `src/components/RH/RecuMateriel.jsx` | 3 |
+| `src/components/RH/pdfGeneratorRH.js` | 3 |
+| `src/components/shared/RechercheFiltre.jsx` | 4 |
+| `src/components/shared/useRecherche.js` | 4 |
+| `src/components/shared/TimelineHistorique.jsx` | 4 |
+| `src/components/shared/ListeArchives.jsx` | 4 |
+
+### Fichiers a modifier
+
+| Fichier | Phase |
+|---------|-------|
+| `package.json` (root) | 0 |
+| `vercel.json` | 0 |
+| `backend/src/routes/factures.js` | 1 + 2 |
+| `src/components/Facturation/NouvelleFacture.jsx` | 1 |
+| `src/templates/templateEngine.js` | 1 + 2 |
+| `src/components/Facturation/DocumentPreview.jsx` | 1 |
+| `src/components/RH/RH.jsx` | 3 |
+| `src/utils/api.js` | 3 + 4 |
+| `src/App.jsx` (routes) | 2 |
+
+### Fichiers a supprimer
+
+| Fichier | Phase |
+|---------|-------|
+| `api/auth/login.js` | 0 |
+| `api/auth/signup.js` | 0 |
+| `api/clients/index.js` | 0 |
+| `api/[...slug].js` | 0 |
+
+---
+
+## CHECKLIST DE VERIFICATION
+
+### Phase 0
+- [ ] `GET /api/health` → `{"status":"ok"}` sur Vercel
+- [ ] Login/signup → JSON valide (pas de HTML)
+- [ ] GET clients avec token → JSON
+- [ ] Aucune erreur "Unexpected token '<'"
+
+### Phase 1
+- [ ] Creer une facture des 9 types → OK
+- [ ] PDF genere avec le bon style
+- [ ] Recu de casse sans tableau → OK
+- [ ] Mode avance avec Qté/Prix Unit → OK
+- [ ] Devise FCFA/EUR/USD → OK
+- [ ] Historique de statut visible
+- [ ] Numero unique par type → FAC-2026-001 / FIS-2026-001 / REC-2026-001 / RCA-2026-001 / BCM-2026-001 / BLV-2026-001 / etc.
+- [ ] Aucun numero duplique entre 2 types (sequence separee)
+
+### Phase 2
+- [ ] Creer un devis des 9 types → OK
+- [ ] Calcul cascade correct (HT → remise → TVA → TTC)
+- [ ] Workflow : brouillon → envoye → accepte → OK
+- [ ] Bouton "Convertir en facture" → facture creee
+- [ ] Numerotation DEV-2026-XXX
+
+### Phase 3
+- [ ] Fiche employe avec 20+ champs → OK
+- [ ] Generer les 14 documents RH → OK
+- [ ] Calcul CNPS 4.2% + 8.65% → OK
+- [ ] Calcul IRPP > 200k → OK
+- [ ] PDF format camerounais → OK
+
+### Phase 4
+- [ ] Recherche texte → retourne des resultats
+- [ ] Filtres par module → fonctionnels
+- [ ] Archive generee a chaque creation → OK
+- [ ] Historique timeline → visible
+
+### Regression
+- [ ] Ventes/Stock/Compta toujours fonctionnels
+- [ ] Login/Signup toujours fonctionnels
+- [ ] Aucune erreur console
+
+---
+
+**STATUT : En attente de "GO" pour commencer la Phase 0.**

@@ -19,11 +19,11 @@ const TYPE_LABELS = {
   'facture': 'FACTURE',
   'facture_fiscale': 'FACTURE FISCALE',
   'facture_proforma': 'FACTURE PROFORMA',
-  'recu': 'RECU',
-  'recu_vente': 'RECU DE VENTE',
-  'recu_caisse': 'RECU DE CAISSE',
+  'recu': 'REÇU',
+  'recu_vente': 'REÇU DE VENTE',
+  'recu_caisse': 'REÇU DE CAISSE',
   'devis': 'DEVIS',
-  'note_credit': 'NOTE DE CREDIT',
+  'note_credit': 'NOTE DE CRÉDIT',
   'bon_commande': 'BON DE COMMANDE',
   'bon_livraison': 'BON DE LIVRAISON',
 }
@@ -47,6 +47,7 @@ export async function genererDocument(data, entreprise) {
   const pageHeight = doc.internal.pageSize.getHeight()
   const style = STYLES[data.template] || STYLES['classique-bleu']
   const typeLabel = TYPE_LABELS[data.type] || 'DOCUMENT'
+  const devise = data.devise || 'XAF'
 
   // Charger logo et cachet
   const [logoImg, cachetImg] = await Promise.all([
@@ -140,12 +141,12 @@ export async function genererDocument(data, entreprise) {
   const tableData = (data.items || []).map((item, i) => {
     const montant = item.quantite * item.prix_unitaire
     const taxe = montant * ((item.taxe || 0) / 100)
-    const ligne = [i + 1, item.designation, item.quantite, formatFCFA(item.prix_unitaire)]
+    const ligne = [i + 1, item.designation, item.quantite, formatFCFA(item.prix_unitaire, devise)]
     if (typeConfig(data.type).showTaxe) {
       ligne.push(item.taxe ? `${item.taxe}%` : '-')
-      ligne.push(formatFCFA(montant + taxe))
+      ligne.push(formatFCFA(montant + taxe, devise))
     } else {
-      ligne.push(formatFCFA(montant))
+      ligne.push(formatFCFA(montant, devise))
     }
     return ligne
   })
@@ -181,12 +182,12 @@ export async function genererDocument(data, entreprise) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.text('Total HT :', totalsX - 50, y)
-  doc.text(formatFCFA(data.totalHT || 0), totalsX, y, { align: 'right' })
+  doc.text(formatFCFA(data.totalHT || 0, devise), totalsX, y, { align: 'right' })
 
   if (data.totalTaxes > 0) {
     y += 6
     doc.text('Taxes :', totalsX - 50, y)
-    doc.text(formatFCFA(data.totalTaxes), totalsX, y, { align: 'right' })
+    doc.text(formatFCFA(data.totalTaxes, devise), totalsX, y, { align: 'right' })
   }
 
   y += 8
@@ -198,7 +199,7 @@ export async function genererDocument(data, entreprise) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
   doc.text('TOTAL :', totalsX - 50, y)
-  doc.text(formatFCFA(data.totalTTC || 0), totalsX, y, { align: 'right' })
+  doc.text(formatFCFA(data.totalTTC || 0, devise), totalsX, y, { align: 'right' })
 
   // === CONDITIONS ===
   y += 12
@@ -241,16 +242,25 @@ export async function genererDocument(data, entreprise) {
 
 function typeConfig(type) {
   const configs = {
-    facture: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
-    facture_fiscale: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
-    facture_proforma: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
-    recu: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
-    recu_vente: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
-    recu_caisse: { showExpiry: false, showCommande: false, showEnvoye: false, showTaxe: false },
-    devis: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
-    note_credit: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
-    bon_commande: { showExpiry: false, showCommande: false, showEnvoye: true, showTaxe: true },
-    bon_livraison: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true },
+    facture: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
+    facture_fiscale: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
+    facture_proforma: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
+    recu: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
+    recu_vente: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
+    recu_caisse: { showExpiry: false, showCommande: false, showEnvoye: false, showTaxe: false, hasTable: true },
+    devis: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
+    note_credit: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
+    bon_commande: { showExpiry: false, showCommande: false, showEnvoye: true, showTaxe: true, hasTable: true },
+    bon_livraison: { showExpiry: true, showCommande: true, showEnvoye: true, showTaxe: true, hasTable: true },
   }
   return configs[type] || configs.facture
+}
+
+const DEVISES = {
+  'XAF': 'FCFA', 'XOF': 'FCFA', 'EUR': '€', 'USD': '$', 'NGN': '₦',
+}
+function formatFCFA(n, devise = 'XAF') {
+  const sym = DEVISES[devise] || 'FCFA'
+  const montant = new Intl.NumberFormat('fr-FR').format(Math.round(Number(n) || 0))
+  return (devise === 'XAF' || devise === 'XOF') ? `${montant} ${sym}` : `${sym} ${montant}`
 }

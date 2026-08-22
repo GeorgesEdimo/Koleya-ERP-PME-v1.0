@@ -4,11 +4,25 @@ import { useApp } from '../../contexts/AppContext'
 import { useAbonnement } from '../../contexts/AbonnementContext'
 import {
   Plus, Search, FileText, Filter, Download, Eye, Trash2,
-  CheckCircle, Clock, AlertTriangle, Send, DollarSign
+  CheckCircle, Clock, AlertTriangle, Send, DollarSign, ArrowRightLeft
 } from 'lucide-react'
 import { generateInvoicePDF, generateTablePDF } from './pdfGenerator'
+import { DOCUMENT_TYPES, TYPE_LABELS } from './documentsConfig'
 
 const formatFCFA = (n) => new Intl.NumberFormat('fr-CM').format(n) + ' FCFA'
+
+const TYPE_BADGE = {
+  facture: 'bg-primary-50 text-primary-700',
+  facture_fiscale: 'bg-primary-50 text-primary-700',
+  facture_proforma: 'bg-indigo-50 text-indigo-700',
+  recu: 'bg-success-50 text-success-700',
+  recu_vente: 'bg-success-50 text-success-700',
+  recu_caisse: 'bg-success-50 text-success-700',
+  devis: 'bg-accent-50 text-accent-700',
+  note_credit: 'bg-purple-50 text-purple-700',
+  bon_commande: 'bg-orange-50 text-orange-700',
+  bon_livraison: 'bg-orange-50 text-orange-700',
+}
 
 export default function Facturation() {
   const { state, dispatch } = useApp()
@@ -19,11 +33,10 @@ export default function Facturation() {
 
   const factures = state.factures
     .filter(f => {
-      if (onglet === 'factures' && f.type !== 'facture') return false
-      if (onglet === 'devis' && f.type !== 'devis') return false
+      if (onglet !== 'toutes' && f.type !== onglet) return false
       if (recherche) {
         const q = recherche.toLowerCase()
-        return f.clientNom.toLowerCase().includes(q) || f.numero.toLowerCase().includes(q)
+        return (f.clientNom || '').toLowerCase().includes(q) || (f.numero || '').toLowerCase().includes(q)
       }
       return true
     })
@@ -53,9 +66,15 @@ export default function Facturation() {
   }
 
   const handleDelete = (id) => {
-    if (confirm('Supprimer cette facture ?')) {
+    if (confirm('Supprimer ce document ?')) {
       dispatch({ type: 'DELETE_FACTURE', payload: id })
     }
+  }
+
+  const handleConvertir = async (id) => {
+    if (!confirm('Convertir ce devis en facture ?')) return
+    const res = await dispatch({ type: 'CONVERTIR_DEVIS', payload: id })
+    if (res.ok) alert('Devis converti en facture avec succès.')
   }
 
   const handlePDF = async (facture) => {
@@ -71,11 +90,13 @@ export default function Facturation() {
       alert('Export PDF indisponible : votre abonnement est expiré. Choisissez un plan pour continuer.')
       return
     }
+    const docType = onglet === 'toutes' ? 'Documents' : (TYPE_LABELS[onglet] || 'Documents')
     const statutLabel = {
       payee: 'Payée', en_retard: 'En retard', brouillon: 'Brouillon', en_attente: 'En attente',
+      valide: 'Validé', refuse: 'Refusé', annule: 'Annulé',
     }
     await generateTablePDF({
-      titre: onglet === 'devis' ? 'Liste des devis' : onglet === 'factures' ? 'Liste des factures' : 'Factures & devis',
+      titre: `Liste — ${docType}`,
       columns: [
         { header: 'Numéro', key: 'numero' },
         { header: 'Client', key: 'clientNom' },
@@ -88,8 +109,31 @@ export default function Facturation() {
       ],
       rows: factures,
       entreprise: state.entreprise,
-      filename: onglet === 'devis' ? 'devis' : 'factures',
+      filename: onglet === 'toutes' ? 'documents' : onglet,
     })
+  }
+
+  const statutBadge = (f) => {
+    if (f.type === 'devis') {
+      return f.statut === 'valide' ? 'bg-success-100 text-success-700'
+        : f.statut === 'refuse' ? 'badge-danger'
+        : f.statut === 'annule' ? 'bg-dark-100 text-dark-500'
+        : 'bg-accent-100 text-accent-700'
+    }
+    return f.statut === 'payee' ? 'badge-success' :
+      f.statut === 'en_retard' ? 'badge-danger' :
+      f.statut === 'brouillon' ? 'bg-dark-100 text-dark-600' :
+      'badge-warning'
+  }
+  const statutLabel = (f) => {
+    if (f.type === 'devis') {
+      return f.statut === 'valide' ? 'Validé' : f.statut === 'refuse' ? 'Refusé'
+        : f.statut === 'annule' ? 'Annulé' : 'Brouillon'
+    }
+    return f.statut === 'payee' ? 'Payée' :
+      f.statut === 'en_retard' ? 'En retard' :
+      f.statut === 'brouillon' ? 'Brouillon' :
+      'En attente'
   }
 
   return (
@@ -135,48 +179,59 @@ export default function Facturation() {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 bg-white rounded-xl border border-dark-200/50 p-1">
-          {['toutes', 'factures', 'devis'].map((tab) => (
+      <div className="flex flex-col gap-4">
+        {/* Filtre par type */}
+        <div className="flex items-center gap-2 overflow-x-auto bg-white rounded-xl border border-dark-200/50 p-1">
+          <button
+            onClick={() => setOnglet('toutes')}
+            className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              onglet === 'toutes' ? 'bg-primary-600 text-white' : 'text-dark-600 hover:bg-dark-50'
+            }`}
+          >
+            Toutes
+          </button>
+          {DOCUMENT_TYPES.map((dt) => (
             <button
-              key={tab}
-              onClick={() => setOnglet(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
-                onglet === tab ? 'bg-primary-600 text-white' : 'text-dark-600 hover:bg-dark-50'
+              key={dt.type}
+              onClick={() => setOnglet(dt.type)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                onglet === dt.type ? 'bg-primary-600 text-white' : 'text-dark-600 hover:bg-dark-50'
               }`}
             >
-              {tab === 'toutes' ? 'Toutes' : tab === 'factures' ? 'Factures' : 'Devis'}
+              {dt.label}
             </button>
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              className="input pl-9 w-48"
-            />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                className="input pl-9 w-48"
+              />
+            </div>
+
+            <select value={tri} onChange={(e) => setTri(e.target.value)} className="select w-auto">
+              <option value="date-desc">Plus récent</option>
+              <option value="date-asc">Plus ancien</option>
+              <option value="montant-desc">Montant ↓</option>
+              <option value="montant-asc">Montant ↑</option>
+            </select>
+
+            <button onClick={handleExportListePDF} className="btn-secondary" title="Exporter la liste en PDF">
+              <Download className="w-4 h-4" />
+              Exporter PDF
+            </button>
           </div>
-
-          <select value={tri} onChange={(e) => setTri(e.target.value)} className="select w-auto">
-            <option value="date-desc">Plus récent</option>
-            <option value="date-asc">Plus ancien</option>
-            <option value="montant-desc">Montant ↓</option>
-            <option value="montant-asc">Montant ↑</option>
-          </select>
-
-          <button onClick={handleExportListePDF} className="btn-secondary" title="Exporter la liste en PDF">
-            <Download className="w-4 h-4" />
-            Exporter PDF
-          </button>
 
           <Link to="/app/facturation/nouvelle" className="btn-primary">
             <Plus className="w-4 h-4" />
-            Nouvelle facture
+            Nouveau document
           </Link>
         </div>
       </div>
@@ -187,6 +242,7 @@ export default function Facturation() {
           <thead>
             <tr>
               <th>Numéro</th>
+              <th>Type</th>
               <th>Client</th>
               <th>Date</th>
               <th>Échéance</th>
@@ -206,6 +262,11 @@ export default function Facturation() {
                     <span className="font-medium text-dark-800">{f.numero}</span>
                   </div>
                 </td>
+                <td>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE[f.type] || 'bg-dark-100 text-dark-600'}`}>
+                    {TYPE_LABELS[f.type] || f.type}
+                  </span>
+                </td>
                 <td className="font-medium">{f.clientNom}</td>
                 <td className="text-dark-600">{new Date(f.date).toLocaleDateString('fr-FR')}</td>
                 <td className="text-dark-600">{new Date(f.echeance).toLocaleDateString('fr-FR')}</td>
@@ -215,23 +276,18 @@ export default function Facturation() {
                   {formatFCFA(f.reste)}
                 </td>
                 <td>
-                  <span className={`badge ${
-                    f.statut === 'payee' ? 'badge-success' :
-                    f.statut === 'en_retard' ? 'badge-danger' :
-                    f.statut === 'brouillon' ? 'bg-dark-100 text-dark-600' :
-                    'badge-warning'
-                  }`}>
-                    {f.statut === 'payee' ? 'Payée' :
-                     f.statut === 'en_retard' ? 'En retard' :
-                     f.statut === 'brouillon' ? 'Brouillon' :
-                     'En attente'}
-                  </span>
+                  <span className={`badge ${statutBadge(f)}`}>{statutLabel(f)}</span>
                 </td>
                 <td>
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => handlePDF(f)} className="p-1.5 rounded-lg hover:bg-dark-100 text-dark-500" title="PDF">
                       <Download className="w-4 h-4" />
                     </button>
+                    {f.type === 'devis' && f.statut !== 'valide' && (
+                      <button onClick={() => handleConvertir(f.id)} className="p-1.5 rounded-lg hover:bg-primary-50 text-primary-600" title="Convertir en facture">
+                        <ArrowRightLeft className="w-4 h-4" />
+                      </button>
+                    )}
                     {f.type === 'facture' && f.reste > 0 && (
                       <button onClick={() => handlePayer(f.id)} className="p-1.5 rounded-lg hover:bg-success-50 text-success-600" title="Enregistrer paiement">
                         <DollarSign className="w-4 h-4" />
@@ -246,10 +302,10 @@ export default function Facturation() {
             ))}
             {factures.length === 0 && (
               <tr>
-                <td colSpan="9" className="text-center py-12 text-dark-400">
+                <td colSpan="10" className="text-center py-12 text-dark-400">
                   <FileText className="w-12 h-12 mx-auto mb-3 text-dark-300" />
-                  <p className="font-medium">Aucune facture trouvée</p>
-                  <p className="text-sm mt-1">Créez votre première facture pour commencer</p>
+                  <p className="font-medium">Aucun document trouvé</p>
+                  <p className="text-sm mt-1">Créez votre premier document pour commencer</p>
                 </td>
               </tr>
             )}

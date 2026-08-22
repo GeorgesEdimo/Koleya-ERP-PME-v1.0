@@ -34,8 +34,11 @@ const mapClient = (c) => ({ id: c.id, nom: c.nom, telephone: c.telephone, email:
 const mapFacture = (f) => ({
   id: f.id, numero: f.numero, clientId: f.client_id, clientNom: f.client_nom || f.clientNom,
   type: f.type, statut: f.statut, date: f.date, echeance: f.echeance,
-  total: Number(f.total), paye: Number(f.paye), reste: Number(f.reste), notes: f.notes,
-  items: (f.items || []).map((i) => ({ id: i.id, description: i.description, quantite: i.quantite, prixUnitaire: Number(i.prix_unitaire), total: Number(i.total) })),
+  total: Number(f.total), totalHT: Number(f.total_ht ?? f.total ?? 0), totalTVA: Number(f.total_ttc - f.total_ht || 0),
+  paye: Number(f.paye), reste: Number(f.reste), notes: f.notes,
+  devise: f.devise || 'XAF', template: f.template_style || 'classique-bleu', remiseGlobale: Number(f.remise_globale || 0),
+  devisMeta: f.devis_meta || null,
+  items: (f.items || []).map((i) => ({ id: i.id, description: i.description, quantite: i.quantite, prixUnitaire: Number(i.prix_unitaire), total: Number(i.total), tauxTva: Number(i.taux_tva || 0), remisePct: Number(i.remise_pct || 0) })),
 })
 const mapCredit = (c) => ({
   id: c.id, clientId: c.client_id, clientNom: c.client_nom || c.clientNom,
@@ -53,7 +56,13 @@ const mapDepense = (d) => ({ id: d.id, categorie: d.categorie, description: d.de
 const toClientAPI = (p) => ({ nom: p.nom, telephone: p.telephone, email: p.email, adresse: p.adresse })
 const toFactureAPI = (p) => ({
   client_id: p.clientId, type: p.type || 'facture', date: p.date, echeance: p.echeance, notes: p.notes,
-  items: (p.items || []).map((i) => ({ description: i.description, quantite: i.quantite, prix_unitaire: i.prixUnitaire })),
+  remise_globale: p.remiseGlobale || 0, devise: p.devise || 'XAF', template_style: p.template || 'classique-bleu',
+  mode_calcul: p.modeCalcul, surface: p.surface, taux: p.taux, duree: p.duree,
+  nb_intervenants: p.nbIntervenants, mention: p.mention, validite_jours: p.validiteJours,
+  items: (p.items || []).map((i) => ({
+    description: i.description, quantite: i.quantite, prix_unitaire: i.prixUnitaire,
+    taux_tva: i.tauxTva || 0, remise_pct: i.remisePct || 0,
+  })),
 })
 const toCreditAPI = (p) => ({ client_id: p.clientId, montant_total: p.montantTotal, echeance: p.echeance, description: p.description })
 const toProduitAPI = (p) => ({ nom: p.nom, reference: p.reference, categorie: p.categorie, stock: p.stock, stock_min: p.stockMin, prix_achat: p.prixAchat, prix_vente: p.prixVente, fournisseur: p.fournisseur })
@@ -196,6 +205,12 @@ export function AppProvider({ children }) {
           dispatchReducer({ type: 'REMOVE_FACTURE', payload: action.payload })
           return { ok: true }
         }
+        case 'CONVERTIR_DEVIS': {
+          const f = await facturesAPI.convertir(action.payload)
+          const mapped = mapFacture(f)
+          dispatchReducer({ type: 'ADD_FACTURE', payload: mapped })
+          return { ok: true, data: mapped }
+        }
         case 'PAYER_FACTURE': {
           const fac = stateRef.current.factures.find((f) => f.id === action.payload.id)
           if (!fac) return { ok: false, error: 'Facture introuvable' }
@@ -332,7 +347,8 @@ export function AppProvider({ children }) {
   }, [state])
 
   const generateNumero = useCallback((type) => {
-    const prefixe = type === 'devis' ? 'DEV' : 'FAC'
+    const prefixes = { 'facture': 'FAC', 'facture_fiscale': 'FIS', 'facture_proforma': 'PRO', 'recu': 'REC', 'recu_vente': 'REV', 'recu_caisse': 'RCA', 'devis': 'DEV', 'note_credit': 'NDC', 'bon_commande': 'BCM', 'bon_livraison': 'BLV' }
+    const prefixe = prefixes[type] || 'FAC'
     return `${prefixe}-${new Date().getFullYear()}-PROV`
   }, [])
 

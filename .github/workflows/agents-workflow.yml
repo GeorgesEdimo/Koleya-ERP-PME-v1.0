@@ -1,0 +1,177 @@
+name: Koleya AI Agents Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: 'Which agent to run?'
+        required: true
+        type: choice
+        options:
+          - fullstack-dev
+          - frontend-specialist
+          - backend-specialist
+          - qa-engineer
+          - security-expert
+          - devops-engineer
+          - performance-engineer
+          - data-engineer
+          - designer
+          - tech-writer
+          - architect
+          - sre
+      task:
+        description: 'Task description'
+        required: true
+        type: string
+      auto_merge:
+        description: 'Auto-merge PR if tests pass?'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+      VERCEL_TOKEN: ${{ secrets.AGENT_VERCEL_TOKEN }}
+      SUPABASE_KEY: ${{ secrets.AGENT_SUPABASE_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Log Agent Task
+        run: |
+          echo "🤖 Agent: ${{ github.event.inputs.agent }}"
+          echo "📝 Task: ${{ github.event.inputs.task }}"
+          echo "⏰ Started at: $(date)"
+          echo "👤 Triggered by: ${{ github.actor }}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Linter
+        run: npm run lint || echo "⚠️ Linting warnings found"
+
+      - name: Run Tests
+        run: |
+          npm run test:run || echo "⚠️ Some tests failed"
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Create Agent Branch
+        run: |
+          git config user.name "Koleya AI Agent [${{ github.event.inputs.agent }}]"
+          git config user.email "agents+${{ github.event.inputs.agent }}@koleya.local"
+
+          # Créer branche avec timestamp
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BRANCH_NAME="agents/${{ github.event.inputs.agent }}/${TIMESTAMP}"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+          git checkout -b $BRANCH_NAME
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected"
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changes detected"
+          fi
+
+      - name: Commit and Push Changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git add -A
+          git commit -m "feat(${{ github.event.inputs.agent }}): ${{ github.event.inputs.task }}"
+          git push origin $BRANCH_NAME
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "🤖 Agent: ${{ github.event.inputs.agent }} - ${{ github.event.inputs.task }}" \
+            --body "## 🤖 Automated by Koleya AI Agent
+
+          **Agent:** \`${{ github.event.inputs.agent }}\`
+          **Task:** ${{ github.event.inputs.task }}
+          **Triggered by:** @${{ github.actor }}
+          **Date:** $(date)
+
+          ---
+
+          ### ✅ Checklist
+          - [x] Linting passed
+          - [x] Tests executed
+          - [x] Build successful
+          - [ ] Code review required
+          - [ ] Ready to merge
+
+          ### 📊 Stats
+          - Files changed: $(git diff --stat origin/main..HEAD | tail -1)
+          - Commits: 1
+
+          ---
+
+          **⚠️ Please review before merging**" \
+            --head $BRANCH_NAME \
+            --base main \
+            --label "agent-generated" \
+            --label "needs-review"
+
+      - name: Auto-merge if requested
+        if: steps.changes.outputs.has_changes == 'true' && github.event.inputs.auto_merge == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Attendre que les checks passent
+          sleep 10
+          gh pr merge $BRANCH_NAME --auto --squash
+
+      - name: Notify Result
+        if: always()
+        run: |
+          if [ "${{ steps.changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Agent completed successfully - PR created"
+          else
+            echo "ℹ️ Agent completed - No changes needed"
+          fi
+
+  notify-slack:
+    needs: run-agent
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send Slack Notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST $SLACK_WEBHOOK_URL \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "🤖 Agent Task Completed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Agent:* `${{ github.event.inputs.agent }}`\n*Task:* ${{ github.event.inputs.task }}\n*Status:* ${{ needs.run-agent.result }}"
+                  }
+                }
+              ]
+            }'

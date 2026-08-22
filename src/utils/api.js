@@ -131,6 +131,7 @@ export const facturesAPI = {
   create: (data) => apiRequest('/factures', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => apiRequest(`/factures/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => apiRequest(`/factures/${id}`, { method: 'DELETE' }),
+  convertir: (id) => apiRequest(`/factures/${id}/convertir`, { method: 'POST' }),
 }
 
 // =============================================
