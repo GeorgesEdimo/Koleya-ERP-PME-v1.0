@@ -12,11 +12,7 @@ export function Fournisseurs() {
   const [selectedFournisseur, setSelectedFournisseur] = useState(null);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    fetchFournisseurs();
-  }, [page, search]);
-
-  const fetchFournisseurs = async () => {
+  const fetchFournisseurs = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get('/fournisseurs', {
@@ -29,7 +25,11 @@ export function Fournisseurs() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search]);
+
+  useEffect(() => {
+    fetchFournisseurs();
+  }, [fetchFournisseurs]);
 
   const handleCreate = async (data) => {
     try {

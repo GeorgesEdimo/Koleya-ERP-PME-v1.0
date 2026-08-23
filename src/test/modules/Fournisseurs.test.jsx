@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Fournisseurs } from './Fournisseurs';
+import { Fournisseurs } from '../../components/Fournisseurs/Fournisseurs';
 
 // Mock l'API
 vi.mock('../../utils/api', () => ({
@@ -23,6 +23,7 @@ describe('Composant Fournisseurs', () => {
   it('affiche le titre', async () => {
     render(<Fournisseurs />);
     expect(screen.getByText('Fournisseurs')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('FOUR-0001')).toBeInTheDocument());
   });
 
   it('affiche la liste des fournisseurs', async () => {
@@ -34,6 +35,7 @@ describe('Composant Fournisseurs', () => {
 
   it('ouvre le modal de création', async () => {
     render(<Fournisseurs />);
+    await waitFor(() => expect(screen.getByText('FOUR-0001')).toBeInTheDocument());
     const button = screen.getByText('+ Nouveau Fournisseur');
     fireEvent.click(button);
     await waitFor(() => {

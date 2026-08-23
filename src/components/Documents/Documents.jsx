@@ -4,6 +4,8 @@ import { FolderOpen, Upload, Download, Trash2, File as FileIcon, Loader2, Plus, 
 import { documentsAPI } from '../../utils/api'
 import DocumentForm from './DocumentForm'
 
+const formatFCFA = (n) => new Intl.NumberFormat('fr-CM').format(n) + ' FCFA'
+
 function formatTaille(octets) {
   if (octets >= 1024 * 1024) return (octets / (1024 * 1024)).toFixed(1) + ' Mo'
   if (octets >= 1024) return (octets / 1024).toFixed(0) + ' Ko'
