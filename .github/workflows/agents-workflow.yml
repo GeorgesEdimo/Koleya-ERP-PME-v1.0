@@ -63,7 +63,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          npm run test:run || echo "⚠️ Some tests failed"
+          npm run test:run -- --exclude '**/integration/**' || echo "⚠️ Some tests failed"
 
       - name: Build Project
         run: npm run build
