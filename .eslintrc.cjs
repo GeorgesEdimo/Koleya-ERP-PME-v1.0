@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   root: true,
   env: { browser: true, es2020: true, node: true },
   extends: [
@@ -16,4 +16,4 @@ export default {
     'no-unused-vars': 'warn',
     'react-hooks/exhaustive-deps': 'warn',
   },
-}
+};
