@@ -71,30 +71,15 @@ export default function Devis() {
     })
   }
 
-  const handleConvertToFacture = (devisItem) => {
+  const handleConvertToFacture = async (devisItem) => {
     if (!confirm(`Convertir le devis ${devisItem.numero} en facture ?`)) return
 
-    // Créer la facture
-    const numeroFacture = generateNumero('facture')
-    const facture = {
-      ...devisItem,
-      numero: numeroFacture,
-      type: 'facture',
-      statut: 'en_attente',
-      paye: 0,
-      reste: devisItem.total,
+    const result = await dispatch({ type: 'CONVERTIR_DEVIS', payload: devisItem.id })
+    if (result.ok) {
+      alert(`Devis converti en facture ${result.data.numero} !`)
+    } else {
+      alert(`Erreur : ${result.error}`)
     }
-    delete facture.id
-
-    dispatch({ type: 'ADD_FACTURE', payload: facture })
-
-    // Mettre à jour le devis comme accepté
-    dispatch({
-      type: 'UPDATE_FACTURE',
-      payload: { id: devisItem.id, statut: 'payee' }
-    })
-
-    alert(`Devis converti en facture ${numeroFacture} !`)
   }
 
   const handleMarkSent = (devisItem) => {
