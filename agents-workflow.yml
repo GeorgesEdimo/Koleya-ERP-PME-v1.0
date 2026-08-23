@@ -1,0 +1,199 @@
+name: AI Agents Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent_type:
+        description: 'Type d''agent à exécuter'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - test
+          - code-review
+          - migration
+          - monitoring
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  # GitHub Secrets - À configurer dans Settings > Secrets
+  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      agent_type: ${{ steps.determine-agent.outputs.agent_type }}
+    steps:
+      - name: Determine Agent Type
+        id: determine-agent
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "agent_type=${{ inputs.agent_type }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "agent_type=code-review" >> $GITHUB_OUTPUT
+          else
+            echo "agent_type=deploy" >> $GITHUB_OUTPUT
+          fi
+
+  code-review-agent:
+    needs: setup
+    if: needs.setup.outputs.agent_type == 'code-review'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Code Review Agent
+        run: |
+          echo "🤖 Agent de revue de code en cours..."
+          npm run lint
+          npm run type-check
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Revue de code automatique terminée'
+            })
+
+  test-agent:
+    needs: setup
+    if: needs.setup.outputs.agent_type == 'test'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: |
+          echo "🧪 Agent de tests en cours..."
+          npm run test:ci
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+  deploy-agent:
+    needs: setup
+    if: needs.setup.outputs.agent_type == 'deploy' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Vercel
+        run: |
+          echo "🚀 Agent de déploiement en cours..."
+          npm install -g vercel
+          vercel deploy --prod --token=$VERCEL_TOKEN
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Run Database Migrations
+        run: |
+          echo "🗄️ Exécution des migrations..."
+          npm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  migration-agent:
+    needs: setup
+    if: needs.setup.outputs.agent_type == 'migration'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Database Migrations
+        run: |
+          echo "🗄️ Agent de migration en cours..."
+          npm run db:migrate
+          npm run db:seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  monitoring-agent:
+    needs: setup
+    if: needs.setup.outputs.agent_type == 'monitoring'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Health
+        run: |
+          echo "🔍 Agent de monitoring en cours..."
+          curl -f ${{ secrets.SUPABASE_URL }}/rest/v1/ \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" || exit 1
+
+      - name: Send Notification
+        if: failure()
+        run: |
+          echo "⚠️ Alerte: Service indisponible"
+          # Ajouter notification Slack/Discord ici
+
+  notify:
+    needs: [code-review-agent, test-agent, deploy-agent, migration-agent, monitoring-agent]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Workflow Summary
+        run: |
+          echo "📊 Résumé du workflow:"
+          echo "Agent: ${{ needs.setup.outputs.agent_type }}"
+          echo "Statut: ${{ job.status }}"
