@@ -121,13 +121,13 @@ export default function Parametres() {
               <Building2 className="w-5 h-5 text-primary-600" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-dark-900">Informations de l'entreprise</h3>
+              <h3 className="text-base font-semibold text-dark-900">Informations de l’entreprise</h3>
               <p className="text-xs text-dark-500">Ces informations apparaissent sur vos factures et devis</p>
             </div>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="input-label">Nom de l'entreprise</label>
+              <label className="input-label">Nom de l’entreprise</label>
               <input type="text" value={entreprise.nom} onChange={(e) => setEntreprise({ ...entreprise, nom: e.target.value })} className="input" />
             </div>
             <div>
@@ -151,7 +151,7 @@ export default function Parametres() {
 
             {/* Logo */}
             <div>
-              <label className="input-label">Logo de l'entreprise</label>
+              <label className="input-label">Logo de l’entreprise</label>
               <p className="text-xs text-dark-400 mb-2">Apparaît en haut à gauche des factures et devis (max 2 Mo)</p>
               <div className="flex items-center gap-4">
                 {entreprise.logo ? (
@@ -179,7 +179,7 @@ export default function Parametres() {
 
             {/* Cachet */}
             <div>
-              <label className="input-label">Cachet de l'entreprise</label>
+              <label className="input-label">Cachet de l’entreprise</label>
               <p className="text-xs text-dark-400 mb-2">Apparaît en bas à droite des factures et devis (max 2 Mo)</p>
               <div className="flex items-center gap-4">
                 {entreprise.cachet ? (
@@ -348,7 +348,7 @@ export default function Parametres() {
                 <Palette className="w-5 h-5 text-primary-600" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-dark-900">Couleur de l'entreprise</h3>
+                <h3 className="text-base font-semibold text-dark-900">Couleur de l’entreprise</h3>
                 <p className="text-xs text-dark-500">Appliquée aux boutons, liens et accents.</p>
               </div>
             </div>

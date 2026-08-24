@@ -45,7 +45,7 @@ export default function ContactPage() {
             <div className="card p-5 flex items-start gap-4 bg-accent-50/40 border-accent-100">
               <MessageCircle className="w-5 h-5 text-accent-600 mt-1 flex-shrink-0" />
               <p className="text-sm text-dark-600">
-                Pour des questions sur les offres ou la facturation, consultez d'abord la{' '}
+                Pour des questions sur les offres ou la facturation, consultez d’abord la{' '}
                 <Link to="/#faq" className="text-accent-600 hover:underline font-medium">FAQ</Link>.
               </p>
             </div>
@@ -60,7 +60,7 @@ export default function ContactPage() {
                   <h2 className="text-xl font-bold text-dark-900 font-display">Message envoyé !</h2>
                   <p className="text-dark-500 mt-2">
                     Merci {form.nom || 'pour votre message'}. Notre équipe vous répondra sous
-                    24 heures ouvrées à l'adresse {form.email || 'indiquée'}.
+                    24 heures ouvrées à l’adresse {form.email || 'indiquée'}.
                   </p>
                   <button
                     onClick={() => { setSent(false); setForm({ nom: '', email: '', sujet: 'Support', message: '' }) }}

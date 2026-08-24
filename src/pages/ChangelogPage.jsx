@@ -93,7 +93,7 @@ export default function ChangelogPage() {
           </ul>
           <p className="text-sm text-dark-500 mt-4">
             Ces fonctionnalités sont en cours de développement. Une date de disponibilité sera
-            annoncée sur cette page dès qu'elle sera confirmée.
+            annoncée sur cette page dès qu’elle sera confirmée.
           </p>
         </div>
       </div>

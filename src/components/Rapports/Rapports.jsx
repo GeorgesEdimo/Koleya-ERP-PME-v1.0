@@ -269,7 +269,7 @@ export default function Rapports() {
           <h2 className="text-lg font-bold text-dark-900 font-display">Classement Clients</h2>
 
           <div className="card p-5">
-            <h3 className="text-sm font-semibold text-dark-900 mb-4">Chiffre d'affaires par client</h3>
+            <h3 className="text-sm font-semibold text-dark-900 mb-4">Chiffre d’affaires par client</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={topClients} layout="vertical" margin={{ left: 100 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />

@@ -207,7 +207,7 @@ export default function Stock() {
               <th>Produit</th>
               <th>Référence</th>
               <th>Catégorie</th>
-              <th>Prix d'achat</th>
+              <th>Prix d’achat</th>
               <th>Prix de vente</th>
               <th>Stock</th>
               <th>Stock min</th>
@@ -302,7 +302,7 @@ export default function Stock() {
                   </select>
                 </div>
                 <div>
-                  <label className="input-label">Prix d'achat (FCFA)</label>
+                  <label className="input-label">Prix d’achat (FCFA)</label>
                   <input type="number" value={form.prixAchat} onChange={(e) => setForm({ ...form, prixAchat: e.target.value })} className="input" min="0" />
                 </div>
                 <div>

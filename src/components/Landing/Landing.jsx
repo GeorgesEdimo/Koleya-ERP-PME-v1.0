@@ -327,7 +327,7 @@ export default function Landing() {
                 Conçu pour le marché africain
               </h2>
               <p className="mt-6 text-dark-500 leading-relaxed">
-                Koleya n'est pas un outil international traduit en français. C'est un ERP
+                Koleya n’est pas un outil international traduit en français. C’est un ERP
                 pensé et développé pour les PME camerounaises et africaines.
               </p>
 
@@ -393,7 +393,7 @@ export default function Landing() {
                     <Star key={i} className="w-4 h-4 fill-accent-400 text-accent-400" />
                   ))}
                 </div>
-                <p className="text-dark-600 text-sm leading-relaxed mb-4">"{t.text}"</p>
+                <p className="text-dark-600 text-sm leading-relaxed mb-4">« {t.text} »</p>
                 <div>
                   <p className="font-semibold text-dark-900 text-sm">{t.name}</p>
                   <p className="text-xs text-dark-500">{t.role}</p>
@@ -412,7 +412,7 @@ export default function Landing() {
               Des tarifs adaptés à votre budget
             </h2>
             <p className="mt-4 text-lg text-dark-500">
-              Pas de frais d'installation. Annulez à tout moment.
+              Pas de frais d’installation. Annulez à tout moment.
             </p>
           </div>
 
@@ -507,7 +507,7 @@ export default function Landing() {
             <div className="p-6">
               {showAuth === 'signup' && (
                 <div className="mb-4">
-                  <label className="input-label">Nom de l'entreprise</label>
+                  <label className="input-label">Nom de l’entreprise</label>
                   <input type="text" className="input" placeholder="Ma PME SARL" />
                 </div>
               )}

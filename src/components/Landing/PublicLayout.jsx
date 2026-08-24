@@ -12,7 +12,7 @@ export function PageIntro({ title, subtitle, badge }) {
           className="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-primary-600 transition-colors mb-5"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour à l'accueil
+          Retour à l’accueil
         </Link>
         {badge && (
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm font-medium mb-4">

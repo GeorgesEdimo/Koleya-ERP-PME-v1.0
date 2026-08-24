@@ -248,7 +248,7 @@ export default function Notifications() {
           <p className="text-xl font-bold text-danger-600 font-display">{stats.echecs || 0}</p>
         </div>
         <div className="stat-card">
-          <span className="text-xs text-dark-500">Aujourd'hui</span>
+          <span className="text-xs text-dark-500">Aujourd’hui</span>
           <p className="text-xl font-bold text-primary-600 font-display">{stats.aujourd_hui || 0}</p>
         </div>
       </div>

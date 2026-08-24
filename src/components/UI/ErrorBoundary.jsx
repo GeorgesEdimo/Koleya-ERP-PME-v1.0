@@ -25,7 +25,7 @@ export default class ErrorBoundary extends React.Component {
             </div>
             <h2 className="text-xl font-bold text-dark-900 mb-2">Une erreur est survenue</h2>
             <p className="text-sm text-dark-500 mb-6">
-              L'application a rencontre un probleme inattendu. Vous pouvez reessayer ou recharger la page.
+              L’application a rencontre un probleme inattendu. Vous pouvez reessayer ou recharger la page.
             </p>
             {this.state.error && (
               <details className="text-xs text-dark-400 text-left mb-4 bg-dark-50 rounded-lg p-3">

@@ -154,10 +154,10 @@ export default function DocumentationPage() {
             <h2 className="text-lg font-bold text-dark-900 font-display">Une question demeure ?</h2>
           </div>
           <p className="text-dark-600 leading-relaxed">
-            Consultez le centre d'aide, la FAQ, ou contactez notre équipe : nous répondons sous 24 heures ouvrées.
+            Consultez le centre d’aide, la FAQ, ou contactez notre équipe : nous répondons sous 24 heures ouvrées.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Link to="/aide" className="btn-secondary text-sm">Centre d'aide</Link>
+            <Link to="/aide" className="btn-secondary text-sm">Centre d’aide</Link>
             <Link to="/contact" className="btn-primary text-sm">Nous contacter</Link>
           </div>
         </section>

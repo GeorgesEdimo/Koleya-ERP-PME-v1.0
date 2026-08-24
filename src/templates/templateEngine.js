@@ -62,7 +62,7 @@ export async function genererDocument(data, entreprise) {
   // Logo
   let textStartX = 15
   if (logoImg) {
-    try { doc.addImage(logoImg, 'PNG', 12, 6, 28, 28) } catch (e) { try { doc.addImage(logoImg, 'JPEG', 12, 6, 28, 28) } catch (e2) {} }
+    try { doc.addImage(logoImg, 'PNG', 12, 6, 28, 28) } catch (e) { try { doc.addImage(logoImg, 'JPEG', 12, 6, 28, 28) } catch (e2) { /* ignore */ } }
     textStartX = 46
   }
 
@@ -224,7 +224,7 @@ export async function genererDocument(data, entreprise) {
 
   // === CACHET ===
   if (cachetImg) {
-    try { doc.addImage(cachetImg, 'PNG', pageWidth - 55, pageHeight - 65, 40, 40) } catch (e) { try { doc.addImage(cachetImg, 'JPEG', pageWidth - 55, pageHeight - 65, 40, 40) } catch (e2) {} }
+    try { doc.addImage(cachetImg, 'PNG', pageWidth - 55, pageHeight - 65, 40, 40) } catch (e) { try { doc.addImage(cachetImg, 'JPEG', pageWidth - 55, pageHeight - 65, 40, 40) } catch (e2) { /* ignore */ } }
   }
 
   // === PIED DE PAGE ===

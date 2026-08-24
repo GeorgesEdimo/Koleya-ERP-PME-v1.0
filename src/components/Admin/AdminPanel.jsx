@@ -301,7 +301,7 @@ export default function AdminPanel() {
           </div>
 
           {!selectedEntreprise ? (
-            <p className="text-sm text-dark-400">Selectionnez une entreprise dans l'onglet "Entreprises".</p>
+            <p className="text-sm text-dark-400">Selectionnez une entreprise dans l’onglet « Entreprises ».</p>
           ) : loading ? (
             <p className="text-sm text-dark-400 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Chargement...</p>
           ) : users.length === 0 ? (
@@ -396,7 +396,7 @@ export default function AdminPanel() {
           </div>
 
           {!selectedEntreprise ? (
-            <p className="text-sm text-dark-400">Selectionnez une entreprise dans l'onglet "Entreprises".</p>
+            <p className="text-sm text-dark-400">Selectionnez une entreprise dans l’onglet « Entreprises ».</p>
           ) : loading ? (
             <p className="text-sm text-dark-400 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Chargement...</p>
           ) : items.length === 0 ? (

@@ -219,7 +219,7 @@ export default function NouvelleFacture() {
                     <select value={devisMeta.modeCalcul} onChange={(e) => setDevisMeta({ ...devisMeta, modeCalcul: e.target.value })} className="input select">
                       <option value="prix_unitaire">Prix unitaire</option>
                       <option value="prix_m2">Prix au m²</option>
-                      <option value="prix_heure">Prix à l'heure</option>
+                      <option value="prix_heure">Prix à l’heure</option>
                       <option value="forfait">Forfait</option>
                     </select>
                   </div>

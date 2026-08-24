@@ -31,9 +31,9 @@ export default function ApiPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
         {/* Vue d'ensemble */}
         <section>
-          <h2 className="text-2xl font-bold text-dark-900 font-display mb-3">Vue d'ensemble</h2>
+          <h2 className="text-2xl font-bold text-dark-900 font-display mb-3">Vue d’ensemble</h2>
           <p className="text-dark-600 leading-relaxed">
-            L'API Koleya permet de créer, lire et mettre à jour vos factures, devis, clients,
+            L’API Koleya permet de créer, lire et mettre à jour vos factures, devis, clients,
             produits et crédits à partir de vos applications. Elle est accessible en HTTPS,
             renvoie des réponses au format JSON et utilise les conventions REST classiques.
           </p>
@@ -60,9 +60,9 @@ export default function ApiPage() {
         <section>
           <h2 className="text-2xl font-bold text-dark-900 font-display mb-3">Authentification</h2>
           <p className="text-dark-600 leading-relaxed">
-            Chaque requête doit être authentifiée avec votre clé API, à transmettre dans l'en-tête
+            Chaque requête doit être authentifiée avec votre clé API, à transmettre dans l’en-tête
             <code className="bg-dark-50 px-1.5 py-0.5 rounded text-primary-700 text-sm mx-1">Authorization</code>.
-            Ne partagez jamais votre clé et utilisez une variable d'environnement côté serveur.
+            Ne partagez jamais votre clé et utilisez une variable d’environnement côté serveur.
           </p>
           <div className="mt-4 flex items-start gap-3 bg-dark-50 rounded-xl p-4">
             <KeyRound className="w-5 h-5 text-accent-600 mt-0.5 flex-shrink-0" />
@@ -109,7 +109,7 @@ export default function ApiPage() {
           <p className="text-sm text-dark-500 mt-3">
             Toutes les réponses incluent les champs <code className="bg-dark-50 px-1.5 py-0.5 rounded">status</code> et{' '}
             <code className="bg-dark-50 px-1.5 py-0.5 rounded">data</code>. Les erreurs renvoient un code HTTP
-            (400, 401, 403, 404, 429, 500) accompagné d'un message explicite.
+            (400, 401, 403, 404, 429, 500) accompagné d’un message explicite.
           </p>
         </section>
 
@@ -127,7 +127,7 @@ export default function ApiPage() {
         <section className="bg-primary-600 rounded-2xl p-8 text-white text-center">
           <h2 className="text-2xl font-bold font-display">Prêt à connecter vos outils ?</h2>
           <p className="mt-2 text-primary-100">
-            L'accès à l'API est inclus dans le plan Business.
+            L’accès à l’API est inclus dans le plan Business.
           </p>
           <Link to="/#tarifs" className="inline-block mt-6 bg-white text-primary-700 px-8 py-3 rounded-xl font-semibold hover:bg-primary-50 transition-colors">
             Découvrir les tarifs

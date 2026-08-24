@@ -45,7 +45,7 @@ export default function AvenantContrat({ employe = {}, entreprise = {}, onClose 
 
       <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         <fieldset className="border border-dark-200 rounded-xl p-4">
-          <legend className="text-sm font-semibold text-primary-600 px-2">Détails de l'avenant</legend>
+          <legend className="text-sm font-semibold text-primary-600 px-2">Détails de l’avenant</legend>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {champ('Contrat de référence (n°)', 'contrat_reference', 'text', { placeholder: 'CONTR-2026-001', required: true })}
             {champ('Date d\'effet', 'date_effet', 'date', { required: true })}

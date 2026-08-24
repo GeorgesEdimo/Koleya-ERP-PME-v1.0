@@ -95,7 +95,7 @@ export default function Comptabilite() {
             <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center">
               <DollarSign className="w-4 h-4 text-primary-600" />
             </div>
-            <span className="text-xs text-dark-500">Chiffre d'affaires</span>
+            <span className="text-xs text-dark-500">Chiffre d’affaires</span>
           </div>
           <p className="text-xl font-bold text-dark-900 font-display">{formatFCFA(stats.chiffreAffaires)}</p>
         </div>

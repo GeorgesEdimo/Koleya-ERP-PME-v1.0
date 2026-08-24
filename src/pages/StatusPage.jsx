@@ -63,8 +63,8 @@ export default function StatusPage() {
             <h2 className="text-lg font-bold text-dark-900 font-display">Incidents passés</h2>
           </div>
           <p className="text-sm text-dark-600 leading-relaxed">
-            Aucun incident majeur n'a été enregistré sur les 30 derniers jours. Les opérations
-            de maintenance sont réalisées en dehors des heures de bureau pour limiter l'impact.
+            Aucun incident majeur n’a été enregistré sur les 30 derniers jours. Les opérations
+            de maintenance sont réalisées en dehors des heures de bureau pour limiter l’impact.
           </p>
         </div>
 
@@ -75,13 +75,13 @@ export default function StatusPage() {
             <h2 className="text-lg font-bold text-dark-900 font-display">Maintenance planifiée</h2>
           </div>
           <p className="text-sm text-dark-600 leading-relaxed">
-            Aucune maintenance n'est actuellement planifiée.
+            Aucune maintenance n’est actuellement planifiée.
           </p>
         </div>
 
         <p className="flex items-center justify-center gap-2 text-sm text-dark-400">
           <CalendarClock className="w-4 h-4" />
-          Les statuts sont actualisés automatiquement et reflètent l'état réel de la plateforme.
+          Les statuts sont actualisés automatiquement et reflètent l’état réel de la plateforme.
         </p>
       </div>
     </>

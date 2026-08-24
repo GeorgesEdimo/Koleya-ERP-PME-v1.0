@@ -110,7 +110,7 @@ export default function PlanPage() {
       </div>
 
       <p className="text-center text-sm text-dark-400">
-        Paiement de démonstration — l'intégration d'un prestataire (Mobile Money, carte) sera ajoutée.
+        Paiement de démonstration — l’intégration d’un prestataire (Mobile Money, carte) sera ajoutée.
       </p>
     </div>
   )

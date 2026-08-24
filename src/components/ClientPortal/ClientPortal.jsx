@@ -278,7 +278,7 @@ export default function ClientPortal() {
 
       {/* Contact */}
       <div className="card p-5">
-        <h3 className="text-base font-semibold text-dark-900 mb-3">Besoin d'aide ?</h3>
+        <h3 className="text-base font-semibold text-dark-900 mb-3">Besoin d’aide ?</h3>
         <div className="flex flex-wrap gap-3">
           <a href={`tel:${state.entreprise.telephone}`} className="btn-secondary text-sm">
             <Phone className="w-4 h-4" />

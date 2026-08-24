@@ -30,7 +30,7 @@ export default function EntretienAnnuel({ employe = {}, entreprise = {}, onClose
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-dark-900">Compte-rendu d'entretien annuel</h2>
+        <h2 className="text-xl font-bold text-dark-900">Compte-rendu d’entretien annuel</h2>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-dark-100 text-dark-500">
           <AlertCircle className="w-5 h-5" />
         </button>

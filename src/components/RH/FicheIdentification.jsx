@@ -80,7 +80,7 @@ export default function FicheIdentification({ employe = {}, entreprise = {}, onC
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-dark-900">Fiche d'identification</h2>
+        <h2 className="text-xl font-bold text-dark-900">Fiche d’identification</h2>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-dark-100 text-dark-500" title="Fermer">
           <AlertCircle className="w-5 h-5" />
         </button>

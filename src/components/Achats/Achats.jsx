@@ -273,7 +273,7 @@ export default function Achats() {
 
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowCreer(false)} className="btn-secondary">Annuler</button>
-                <button type="submit" className="btn-primary">Enregistrer l'achat</button>
+                <button type="submit" className="btn-primary">Enregistrer l’achat</button>
               </div>
             </form>
           </div>

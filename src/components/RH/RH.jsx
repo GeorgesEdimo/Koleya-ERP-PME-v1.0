@@ -304,7 +304,7 @@ export default function RH() {
                   <th>CNPS</th>
                   <th>IRPP</th>
                   <th>Net à payer</th>
-                  <th>Date d'embauche</th>
+                  <th>Date d’embauche</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
@@ -417,7 +417,7 @@ export default function RH() {
           {docEmploye && !docModal && (
             <div className="space-y-4">
               {Object.entries(DOCUMENTS_RH.reduce((acc, d) => {
-                ;(acc[d.cat] = acc[d.cat] || []).push(d)
+                (acc[d.cat] = acc[d.cat] || []).push(d)
                 return acc
               }, {})).map(([cat, docs]) => (
                 <div key={cat}>
@@ -512,7 +512,7 @@ export default function RH() {
                     <input type="number" value={form.salaire} onChange={(e) => setForm({ ...form, salaire: e.target.value })} className="input" min="0" required />
                   </div>
                   <div>
-                    <label className="input-label">Date d'embauche</label>
+                    <label className="input-label">Date d’embauche</label>
                     <input type="date" value={form.dateEmbauche} onChange={(e) => setForm({ ...form, dateEmbauche: e.target.value })} className="input" />
                   </div>
                   <div>
@@ -565,7 +565,7 @@ export default function RH() {
                     </select>
                   </div>
                   <div>
-                    <label className="input-label">Nb d'enfants</label>
+                    <label className="input-label">Nb d’enfants</label>
                     <input type="number" value={form.nbEnfants} onChange={(e) => setForm({ ...form, nbEnfants: e.target.value })} className="input" min="0" />
                   </div>
                   <div>

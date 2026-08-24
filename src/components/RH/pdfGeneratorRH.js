@@ -50,7 +50,7 @@ async function header(doc, entreprise, titre) {
   const [logo] = await Promise.all([loadImage(entreprise?.logo)])
   let textX = 15
   if (logo) {
-    try { doc.addImage(logo, 'PNG', 12, 6, 24, 24) } catch (e) { try { doc.addImage(logo, 'JPEG', 12, 6, 24, 24) } catch (e2) {} }
+    try { doc.addImage(logo, 'PNG', 12, 6, 24, 24) } catch (e) { try { doc.addImage(logo, 'JPEG', 12, 6, 24, 24) } catch (e2) { /* ignore */ } }
     textX = 44
   }
   doc.setTextColor(255, 255, 255)

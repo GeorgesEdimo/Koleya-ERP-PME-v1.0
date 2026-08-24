@@ -160,7 +160,7 @@ if (require.main === module) {
     `)
   })
 
-  function shutdown(signal) {
+  const shutdown = (signal) => {
     console.log(`\n${signal} recu, arret en cours...`)
     server.close(async () => {
       try {

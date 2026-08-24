@@ -61,7 +61,7 @@ export default function TimelineHistorique({ evenements: evenementsProp, module,
   }, [evenementsProp])
 
   if (loading) {
-    return <div className="text-sm text-dark-500 py-4">Chargement de l'historique…</div>
+    return <div className="text-sm text-dark-500 py-4">Chargement de l’historique…</div>
   }
   if (erreur) {
     return <div className="rounded-lg bg-danger-50 text-danger-700 px-3 py-2 text-sm">{erreur}</div>

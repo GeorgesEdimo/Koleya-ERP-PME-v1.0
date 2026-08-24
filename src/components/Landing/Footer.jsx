@@ -15,7 +15,7 @@ export default function Footer() {
               <span className="text-lg font-bold text-white font-display">Koleya</span>
             </div>
             <p className="text-sm leading-relaxed">
-              L'ERP simplifié pour les PME camerounaises.
+              L’ERP simplifié pour les PME camerounaises.
             </p>
           </div>
 
@@ -32,7 +32,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold text-sm mb-3">Support</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/aide" className="hover:text-white transition-colors">Centre d'aide</Link></li>
+              <li><Link to="/aide" className="hover:text-white transition-colors">Centre d’aide</Link></li>
               <li><Link to="/documentation" className="hover:text-white transition-colors">Documentation</Link></li>
               <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
               <li><Link to="/status" className="hover:text-white transition-colors">Status</Link></li>

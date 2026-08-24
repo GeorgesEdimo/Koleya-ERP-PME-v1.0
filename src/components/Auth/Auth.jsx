@@ -401,7 +401,7 @@ export default function Auth() {
         {/* Back to home */}
         <p className="text-center text-sm text-primary-200 mt-6">
           <Link to="/" className="hover:text-white transition-colors">
-            Retour à la page d'accueil
+            Retour à la page d’accueil
           </Link>
         </p>
       </div>
