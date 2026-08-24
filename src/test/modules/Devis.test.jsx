@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Devis from '../../components/Devis/Devis'
 
@@ -36,16 +36,22 @@ function renderDevis() {
 }
 
 describe('Module Devis', () => {
-  it('affiche les 4 cartes de statistiques', () => {
+  it('affiche les 4 cartes de statistiques (labels)', () => {
     renderDevis()
-    // Les 4 labels de stats sont présents
+    // Les 4 labels de stats sont présents (ils apparaissent aussi dans les filtres, donc on vérifie juste l'existence)
     expect(screen.getByText('Total devis')).toBeInTheDocument()
     expect(screen.getByText('Brouillons')).toBeInTheDocument()
     expect(screen.getByText('Envoyés')).toBeInTheDocument()
     expect(screen.getByText('Valeur totale')).toBeInTheDocument()
-    // Les valeurs (au moins une fois)
-    expect(screen.getByText('1')).toBeInTheDocument()
-    expect(screen.getByText('0')).toBeInTheDocument()
+  })
+
+  it('affiche les valeurs des statistiques', () => {
+    renderDevis()
+    // Les valeurs numériques : au moins '1' (total, brouillons) et '0' (envoyés)
+    const ones = screen.getAllByText('1')
+    const zeros = screen.getAllByText('0')
+    expect(ones.length).toBeGreaterThanOrEqual(2)
+    expect(zeros.length).toBeGreaterThanOrEqual(1)
   })
 
   it('affiche un devis existant avec son numero et son client', async () => {
@@ -58,12 +64,12 @@ describe('Module Devis', () => {
   it('affiche le montant total du devis dans la carte Valeur totale', async () => {
     renderDevis()
     await waitFor(() => {
-      // On récupère la carte "Valeur totale" via son label parent
-      const valeurLabel = screen.getByText('Valeur totale')
-      const card = valeurLabel.closest('.stat-card')
-      expect(card).toBeInTheDocument()
-      // Dans cette carte, le montant a la classe text-success-600
-      const montant = card.querySelector('.text-success-600')
+      // La carte "Valeur totale" contient le montant avec la classe text-success-600
+      const valeurTotale = screen.getByText('Valeur totale')
+      const statCard = valeurTotale.closest('.stat-card')
+      expect(statCard).toBeInTheDocument()
+      // Le montant est dans un <p> avec text-success-600 à l'intérieur de cette carte
+      const montant = statCard.querySelector('p.text-success-600')
       expect(montant).toBeInTheDocument()
       expect(montant.textContent).toMatch(/FCFA/)
     })
@@ -72,8 +78,9 @@ describe('Module Devis', () => {
   it('affiche le montant du devis dans la liste', async () => {
     renderDevis()
     await waitFor(() => {
-      // Le montant principal du devis dans la liste (text-2xl font-bold text-dark-900)
       const devisCard = screen.getByText('DEV-2026-001').closest('.card')
+      expect(devisCard).toBeInTheDocument()
+      // Le montant principal : classe text-2xl font-bold text-dark-900 font-display
       const montant = devisCard.querySelector('.text-2xl.font-bold.text-dark-900')
       expect(montant).toBeInTheDocument()
       expect(montant.textContent).toMatch(/FCFA/)
