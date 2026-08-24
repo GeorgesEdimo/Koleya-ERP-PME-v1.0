@@ -38,11 +38,22 @@ function renderDevis() {
 describe('Module Devis', () => {
   it('affiche les 4 cartes de statistiques (labels)', () => {
     renderDevis()
-    // Les 4 labels de stats sont présents (ils apparaissent aussi dans les filtres, donc on vérifie juste l'existence)
-    expect(screen.getByText('Total devis')).toBeInTheDocument()
-    expect(screen.getByText('Brouillons')).toBeInTheDocument()
-    expect(screen.getByText('Envoyés')).toBeInTheDocument()
-    expect(screen.getByText('Valeur totale')).toBeInTheDocument()
+    // Les 4 labels de stats sont présents (ils apparaissent aussi dans les filtres, donc on restreint aux cartes de statistiques)
+    // Utilisation de getAllByText avec une query qui restreint aux éléments dans .stat-card pour éviter les faux positifs
+    const statCards = Array.from(document.querySelectorAll('.stat-card'))
+    const totalDevisInCard = statCards
+      .find(card => card.textContent.includes('Total devis'))
+    const brouillonsInCard = statCards
+      .find(card => card.textContent.includes('Brouillons'))
+    const envoiesInCard = statCards
+      .find(card => card.textContent.includes('Envoyés'))
+    const valeurTotaleInCard = statCards
+      .find(card => card.textContent.includes('Valeur totale'))
+
+    expect(totalDevisInCard).toBeInTheDocument()
+    expect(brouillonsInCard).toBeInTheDocument()
+    expect(envoiesInCard).toBeInTheDocument()
+    expect(valeurTotaleInCard).toBeInTheDocument()
   })
 
   it('affiche les valeurs des statistiques', () => {
