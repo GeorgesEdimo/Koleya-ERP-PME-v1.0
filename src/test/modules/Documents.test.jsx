@@ -70,7 +70,7 @@ describe('Module Documents', () => {
       note_credit: 'NCR',
     }
 
-    Object.entries(types).forEach(([type, prefixe]) => {
+    Object.entries(types).forEach(([_type, prefixe]) => {
       const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
       const numero = `${prefixe}-${date}-001`
       expect(numero).toMatch(new RegExp(`^${prefixe}-\\d{8}-001$`))

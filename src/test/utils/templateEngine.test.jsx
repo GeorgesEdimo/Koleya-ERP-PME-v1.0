@@ -23,7 +23,7 @@ describe('Template Engine', () => {
       bon_livraison: 'BON DE LIVRAISON',
     }
 
-    Object.entries(labels).forEach(([type, label]) => {
+    Object.entries(labels).forEach(([_type, label]) => {
       expect(label).toBeTruthy()
       expect(label.length).toBeGreaterThan(3)
     })

@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 // Mock localStorage
 const localStorageMock = (() => {

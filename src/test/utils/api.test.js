@@ -19,7 +19,7 @@ describe('API Utils', () => {
   })
 
   it('les tokens sont null par defaut', async () => {
-    const { setTokens, clearTokens } = await import('../../utils/api')
+    const { clearTokens } = await import('../../utils/api')
     clearTokens()
     expect(localStorage.getItem('koleya_refresh_token')).toBeNull()
   })
