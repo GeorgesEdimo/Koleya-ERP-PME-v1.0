@@ -194,6 +194,42 @@ export const statsAPI = {
 }
 
 // =============================================
+// PAIE
+// =============================================
+export const paieAPI = {
+  calculer: (data) => apiRequest('/rh-etendu/paie/calculer', { method: 'POST', body: JSON.stringify(data) }),
+  lister: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiRequest(`/rh-etendu/paie${qs ? '?' + qs : ''}`)
+  },
+  consulterSolde: (employeId) => apiRequest(`/rh-etendu/paie/consulter-solde/${employeId}`),
+}
+
+// =============================================
+// CONGÉS
+// =============================================
+export const congesAPI = {
+  soumettre: (data) => apiRequest('/rh-etendu/conges', { method: 'POST', body: JSON.stringify(data) }),
+  lister: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiRequest(`/rh-etendu/conges${qs ? '?' + qs : ''}`)
+  },
+  decider: (id, decision) => apiRequest(`/rh-etendu/conges/${id}/decider`, { method: 'PUT', body: JSON.stringify({ statut: decision }) }),
+}
+
+// =============================================
+// ÉVALUATIONS
+// =============================================
+export const evaluationsAPI = {
+  planifier: (data) => apiRequest('/rh-etendu/evaluations', { method: 'POST', body: JSON.stringify(data) }),
+  lister: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiRequest(`/rh-etendu/evaluations${qs ? '?' + qs : ''}`)
+  },
+  enregistrerNotes: (id, notes) => apiRequest(`/rh-etendu/evaluations/${id}/notes`, { method: 'PUT', body: JSON.stringify({ notes }) }),
+}
+
+// =============================================
 // NOTIFICATIONS
 // =============================================
 export const notificationsAPI = {

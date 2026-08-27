@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useReducer, useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
   clientsAPI, facturesAPI, creditsAPI, produitsAPI, employesAPI, depensesAPI, statsAPI,
+  paieAPI, congesAPI, evaluationsAPI,
 } from '../utils/api'
+
+import { usePaie, useConges, useEvaluations } from './RhTools'
 import { useAuth } from './AuthContext'
 
 const AppContext = createContext()
@@ -15,6 +18,10 @@ const initialState = {
   produits: [],
   employes: [],
   depenses: [],
+  paie: [], // bulletins paie
+  conges: [], // demandes conges
+  evaluations: [], // evaluations annuelles
+  soldesConges: null, // solde conges actif
 }
 
 // Les paramètres de facturation sont stockés sur la ligne entreprise (backend)
@@ -170,6 +177,46 @@ export function AppProvider({ children }) {
           const e = await statsAPI.updateEntreprise(action.payload)
           dispatchReducer({ type: 'SET_ENTREPRISE', payload: e })
           return { ok: true, data: e }
+        }
+        case 'SET_PAIE': {
+          const { paie } = action.payload
+          dispatchReducer({ type: 'SET_PAIE', payload: paie })
+          return { ok: true, data: paie }
+        }
+        case 'ADD_PAIE': {
+          const p = action.payload
+          dispatchReducer({ type: 'ADD_PAIE', payload: p })
+          return { ok: true, data: p }
+        }
+        case 'ADD_CONGE': {
+          const c = action.payload
+          dispatchReducer({ type: 'ADD_CONGE', payload: c })
+          return { ok: true, data: c }
+        }
+        case 'UPDATE_CONGE': {
+          const c = action.payload
+          dispatchReducer({ type: 'UPDATE_CONGE', payload: c })
+          return { ok: true, data: c }
+        }
+        case 'SET_CONGE': {
+          const { conges } = action.payload
+          dispatchReducer({ type: 'SET_CONGE', payload: conges })
+          return { ok: true, data: conges }
+        }
+        case 'ADD_EVALUATION': {
+          const e = action.payload
+          dispatchReducer({ type: 'ADD_EVALUATION', payload: e })
+          return { ok: true, data: e }
+        }
+        case 'UPDATE_EVALUATION': {
+          const e = action.payload
+          dispatchReducer({ type: 'UPDATE_EVALUATION', payload: e })
+          return { ok: true, data: e }
+        }
+        case 'SET_EVALUATION': {
+          const { evaluations } = action.payload
+          dispatchReducer({ type: 'SET_EVALUATION', payload: evaluations })
+          return { ok: true, data: evaluations }
         }
         case 'ADD_CLIENT': {
           const c = await clientsAPI.create(toClientAPI(action.payload))
