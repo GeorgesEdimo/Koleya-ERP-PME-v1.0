@@ -1,6 +1,4 @@
-"""
-Integration tests for the extended RH (paie, conges, evaluations) routes.
-"""
+// Integration tests for the extended RH (paie, conges, evaluations) routes.
 const request = require('supertest')
 const app = require('../server')
 const sequelize = require('../config/database')

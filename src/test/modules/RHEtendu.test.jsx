@@ -1,8 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { AppProvider } from '../../contexts/AppContext'
+import { AuthProvider } from '../../contexts/AuthContext'
 import { usePaie, useConges, useEvaluations } from '../../contexts/RhTools'
+import { useApp } from '../../contexts/AppContext'
+import { useState, useEffect } from 'react'
 
 // Mock the api calls
 vi.mock('../../utils/api', () => ({
@@ -26,9 +29,11 @@ vi.mock('../../utils/api', () => ({
 const renderWithProviders = (component) => {
   return render(
     <MemoryRouter>
-      <AppProvider>
-        {component}
-      </AppProvider>
+      <AuthProvider>
+        <AppProvider>
+          {component}
+        </AppProvider>
+      </AuthProvider>
     </MemoryRouter>
   )
 }
