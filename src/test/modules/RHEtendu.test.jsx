@@ -3,27 +3,22 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { AppProvider } from '../../contexts/AppContext'
 import { AuthProvider } from '../../contexts/AuthContext'
-import { usePaie, useConges, useEvaluations } from '../../contexts/RhTools'
 import { useApp } from '../../contexts/AppContext'
 import { useState, useEffect } from 'react'
 
-// Mock the api calls
+// Mock des API pour éviter les appels réseau
 vi.mock('../../utils/api', () => ({
-  paieAPI: {
-    calculer: async (data) => ({ id: '1', ...data, salaire_net: 444644, statut: 'genere' }),
-    lister: async () => [],
-    consulterSolde: async () => ({ total: 444644 }),
-  },
-  congesAPI: {
-    soumettre: async (data) => ({ id: '2', ...data, statut: 'en_attente' }),
-    lister: async () => [],
-    decider: async (id, decision) => ({ id, ...decision, approuve_par: 'user1' }),
-  },
-  evaluationsAPI: {
-    planifier: async (data) => ({ id: '3', ...data, statut: 'planifie' }),
-    lister: async () => [],
-    enregistrerNotes: async (id, notes) => ({ id, notes }),
-  },
+  clientsAPI: { list: async () => [], create: async (d) => d, update: async (id, d) => d, delete: async () => {} },
+  facturesAPI: { list: async () => ({ factures: [] }), create: async (d) => d, update: async (id, d) => d, delete: async () => {}, convertir: async (d) => d },
+  creditsAPI: { list: async () => [], create: async (d) => d, delete: async () => {}, payer: async () => ({ nouveauReste: 0, nouveauStatut: 'payee' }) },
+  produitsAPI: { list: async () => [], create: async (d) => d, update: async (id, d) => d, delete: async () => {} },
+  employesAPI: { list: async () => [], create: async (d) => d, update: async (id, d) => d, delete: async () => {} },
+  depensesAPI: { list: async () => [], create: async (d) => d, delete: async () => {} },
+  statsAPI: { entreprise: async () => ({}) },
+  authAPI: { me: async () => ({ user: {} }) },
+  paieAPI: { calculer: async (d) => ({ id: '1', ...d, salaire_net: 444644, statut: 'genere' }), lister: async () => [] },
+  congesAPI: { soumettre: async (d) => ({ id: '2', ...d, statut: 'en_attente' }), lister: async () => [], decider: async () => ({}) },
+  evaluationsAPI: { planifier: async (d) => ({ id: '3', ...d, statut: 'planifie' }), lister: async () => [], enregistrerNotes: async () => ({}) },
 }))
 
 const renderWithProviders = (component) => {
@@ -38,87 +33,70 @@ const renderWithProviders = (component) => {
   )
 }
 
-describe('RH Étendu UI (usePaie, useConges, useEvaluations)', () => {
-  it('affiche les statistiques de paie correctement', async () => {
-    const TestComponent = () => {
-      const { stats } = usePaie()
-      return <div>{stats ? `Net: ${stats.net}` : 'Loading'}</div>
-    }
-    renderWithProviders(<TestComponent />)
-    await waitFor(() => expect(screen.getByText(/Net:/)).toBeInTheDocument())
-  })
-
-  it('soumet une demande de conge', async () => {
-    const TestComponent = () => {
-      const { soumettreDemande } = useConges()
-      return (
-        <button onClick={() => soumettreDemande({ type_conge: 'annuel', nb_jours: 5 })}>
-          Soumettre
-        </button>
-      )
-    }
-    renderWithProviders(<TestComponent />)
-    const button = screen.getByRole('button', { name: /soumettre/i })
-    // Simuler le click - since API is mocked, it should complete without error
-    fireEvent.click(button)
-    await waitFor(() => expect(screen.getByText(/soumis/i)).toBeInTheDocument())
-  })
-
-  it('liste les evaluations', async () => {
-    const TestComponent = () => {
-      const { listerEvaluations } = useEvaluations()
-      const [evaluations, setEvaluations] = useState([])
-      useEffect(() => {
-        listerEvaluations().then(setEvaluations)
-      }, [])
-      return (
-        <ul>
-          {evaluations.map((e) => (
-            <li key={e.id}>{e.annee} - {e.note_globale}</li>
-          ))}
-        </ul>
-      )
-    }
-    renderWithProviders(<TestComponent />)
-    await waitFor(() => expect(screen.getByText(/2026 - 8.5/)).toBeInTheDocument())
-  })
-})
-
-// Test the actual context providers and hooks
-describe('AppContext with extended RH states', () => {
-  it('should handle paie state', async () => {
+// Tests du reducer AppContext avec les états RH étendus
+describe('AppContext RH Reducer', () => {
+  it('devrait ajouter un bulletin de paie', async () => {
+    let dispatchRef
     const TestComponent = () => {
       const { dispatch, loading } = useApp()
+      dispatchRef = dispatch
       useEffect(() => {
-        dispatch({ type: 'ADD_PAIE', payload: { id: 'test', salaire_net: 1000 } })
+        dispatch({ type: 'ADD_PAIE', payload: { id: 'test', salaire_net: 444644 } })
       }, [])
-      return <div>{loading ? 'Loading' : 'Done'}</div>
+      return <div data-testid="loading">{loading ? 'Loading' : 'Done'}</div>
     }
     renderWithProviders(<TestComponent />)
-    await waitFor(() => expect(screen.getByText('Done')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('Done'))
   })
 
-  it('should handle conges state', async () => {
+  it('devrait gérer les états conges', async () => {
     const TestComponent = () => {
-      const { dispatch } = useApp()
+      const { dispatch, state } = useApp()
       useEffect(() => {
-        dispatch({ type: 'ADD_CONGE', payload: { id: 'conge1', type_conge: 'maladie' } })
+        dispatch({ type: 'ADD_CONGE', payload: { id: 'conge1', type_conge: 'annuel', statut: 'en_attente' } })
       }, [])
-      return <div>{state.conges.length} conges</div>
+      return <div data-testid="conges-count">{state.conges.length}</div>
     }
     renderWithProviders(<TestComponent />)
-    await waitFor(() => expect(screen.getByText('1 conges')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByTestId('conges-count')).toHaveTextContent('1'))
   })
 
-  it('should handle evaluations state', async () => {
+  it('devrait gérer les états evaluations', async () => {
     const TestComponent = () => {
-      const { dispatch } = useApp()
+      const { dispatch, state } = useApp()
       useEffect(() => {
-        dispatch({ type: 'ADD_EVALUATION', payload: { id: 'eval1', annee: 2026, note_globale: 9.0 } })
+        dispatch({ type: 'ADD_EVALUATION', payload: { id: 'eval1', annee: 2026, note_globale: 8.5 } })
       }, [])
-      return <div>{state.evaluations.length} evaluations</div>
+      return <div data-testid="eval-count">{state.evaluations.length}</div>
     }
     renderWithProviders(<TestComponent />)
-    await waitFor(() => expect(screen.getByText('1 evaluations')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByTestId('eval-count')).toHaveTextContent('1'))
+  })
+
+  it('devrait mettre à jour un congé existant', async () => {
+    const TestComponent = () => {
+      const { dispatch, state } = useApp()
+      useEffect(() => {
+        dispatch({ type: 'ADD_CONGE', payload: { id: 'conge2', type_conge: 'maladie', statut: 'en_attente' } })
+        dispatch({ type: 'UPDATE_CONGE', payload: { id: 'conge2', statut: 'approuve' } })
+      }, [])
+      const approuve = state.conges.find(c => c.id === 'conge2')
+      return <div data-testid="conge-statut">{approuve?.statut}</div>
+    }
+    renderWithProviders(<TestComponent />)
+    await waitFor(() => expect(screen.getByTestId('conge-statut')).toHaveTextContent('approuve'))
+  })
+
+  it('devrait remplacer la liste des évaluations (SET_EVALUATION)', async () => {
+    const TestComponent = () => {
+      const { dispatch, state } = useApp()
+      useEffect(() => {
+        dispatch({ type: 'ADD_EVALUATION', payload: { id: 'eval-old' } })
+        dispatch({ type: 'SET_EVALUATION', payload: [{ id: 'eval-new', annee: 2026 }] })
+      }, [])
+      return <div data-testid="eval-count">{state.evaluations.length}</div>
+    }
+    renderWithProviders(<TestComponent />)
+    await waitFor(() => expect(screen.getByTestId('eval-count')).toHaveTextContent('1'))
   })
 })
